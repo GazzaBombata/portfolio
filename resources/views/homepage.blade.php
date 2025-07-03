@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giorgio Giotto, Full Stack Developer Portfolio!</title>
+  <title>Giorgio Giotto, Full Stack Developer Portfolio!!!</title>
   <!-- <script src="https://cdn.tailwindcss.com"></script> -->
   @vite('resources/css/app.css')
   <link rel="icon" href="{{ asset('assets/favicon.jpg') }}" type="image/x-icon">
@@ -110,7 +110,7 @@
               <div class="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div
                   class="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-                  Looking for the CV? <a href="https://www.linkedin.com/in/giorgiogiotto/" class="font-semibold text-indigo-600"><span class="absolute inset-0"
+                  Looking for the CV???? <a href="https://www.linkedin.com/in/giorgiogiotto/" class="font-semibold text-indigo-600"><span class="absolute inset-0"
                       aria-hidden="true"></span>Download on Linkedin <span aria-hidden="true">&rarr;</span></a>
                 </div>
               </div>
