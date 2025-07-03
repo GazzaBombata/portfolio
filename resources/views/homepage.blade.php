@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Giorgio Giotto, Full Stack Developer Portfolio</title>
+  <title>Giorgio Giotto, Full Stack Developer Portfolio!</title>
   <!-- <script src="https://cdn.tailwindcss.com"></script> -->
   @vite('resources/css/app.css')
   <link rel="icon" href="{{ asset('assets/favicon.jpg') }}" type="image/x-icon">
@@ -121,7 +121,7 @@
                 <p class="mt-6 text-lg leading-8 text-gray-600">An Ops manager, entrepreneur and intrapreneur turned
                   IT Project Manager. Sounds extravagant? Contact me and find it out.</p>
                 <div class="mt-10 flex items-center justify-center gap-x-6">
-                  <a href="#" class="hidden rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 
+                  <a href="#" class="hidden rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2
                     focus-visible:outline-offset-2 focus-visible:outline-indigo-600" type="button"
                     data-drawer-target="drawer-form" data-drawer-show="drawer-form" aria-controls="drawer-form">Contact
                     me</a>
