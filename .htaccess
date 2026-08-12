@@ -1,9 +1,15 @@
 <IfModule mod_rewrite.c>
+
+    RewriteEngine on
+    RewriteCond %{HTTP_HOST} ^giorgiogiotto.it$ [NC,OR] 
+    RewriteCond %{HTTP_HOST} ^www.giorgiogiotto.it$
+    RewriteCond %{REQUEST_URI} !public/
+    RewriteRule (.*) /public/$1 [L]
+
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
-    RewriteEngine On
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

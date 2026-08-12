@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Giorgio Giotto, Full Stack Developer Portfolio</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+  @vite('resources/css/app.css')
   <link rel="icon" href="{{ asset('assets/favicon.jpg') }}" type="image/x-icon">
+   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 </head>
 
@@ -48,7 +50,7 @@
         <div
           class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div class="flex items-center justify-between">
-            <a href="#" class="-m-1.5 p-1.5">
+            <a href="/" class="-m-1.5 p-1.5">
               <span class="sr-only">Giorgio Giotto - Full Stack Developer Logo</span>
               <img class="h-8 w-auto"
                 src="{{ asset('assets/favicon.jpg') }}"
@@ -72,11 +74,11 @@
                 <a href="#skills"
                   class="toggle-button -mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50">Skills</a>
               </div>
-              <div class="py-6">
+              <!-- <div class="py-6">
                 <a href="#"
                   class="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50">Log
                   in</a>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -165,7 +167,7 @@
 
   <div class="flex flex-col items-center justify-items-center space-y-10 py-10" id="projects">
     <h2 class="text-4xl font-bold dark:text-white">Web Development Projects</h2>
-    <div class="flex flex-row items-center justify-items-center space-x-10 py-10 max-h-max">
+    <div class="flex flex-col md:flex-row items-center justify-items-center md:space-x-10 py-10 max-h-max">
       <div class="max-w-sm bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
           <a href="https://medbooks.io" class="flex flex-col items-center">
               <img class="rounded-t-lg h-56" src="{{asset('assets/medbooks-logo.png')}}" alt="Medbooks Logo" />
@@ -174,7 +176,7 @@
               <a href="https://medbooks.io">
                   <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Medbooks</h5>
               </a>
-              <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Appontments scheduling SaaS for healthcare professionals and clinics, built with Bubble and Javascript.</p>
+              <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Appointments scheduling SaaS for healthcare professionals and clinics, built with Bubble and Javascript.</p>
               <a href="https://medbooks.io" class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                   Visit
                   <svg class="rtl:rotate-180 w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
@@ -293,7 +295,7 @@
         </span>
         <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">Shopper Support Lead - Everli</h3>
         <time class="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">From July 2020 to September 2022</time>
-        <p class="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">Responsible for a team of 15+ people, managing italian problematic orders for Everli, an grocery delivery business</p>
+        <p class="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">Responsible for a team of 15+ people, managing italian problematic orders for Everli (e-grocery delivery business) </p>
         <a href="https://www.linkedin.com/company/everli-formerly-supermercato24/"
           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-gray-100 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
           Visit LinkedIn page
@@ -333,31 +335,33 @@
 
 
 
-  <div class="flex flex-col items-center justify-items-center space-y-10 py-10" id="skills">
+  <div class="flex flex-col items-center justify-items-center space-y-10 py-10" id="skills" x-data="{ tab: 'languages' }">
   <h2 class="text-4xl font-bold dark:text-white">Skills</h2>
   <div class="w-full md:w-5/6 flex flex-col items-center justify-items-center">
   <div class="w-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
     <div class="sm:hidden">
+
         <label for="tabs" class="sr-only">Select tab</label>
-        <select id="tabs" class="bg-gray-50 border-0 border-b border-gray-200 text-gray-900 text-sm rounded-t-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option>Languages</option>
-            <option>Frameworks</option>
-            <option>Tools</option>
+        <select id="tabs" @change="tab = $event.target.value" class="bg-gray-50 border-0 border-b border-gray-200 text-gray-900 text-sm rounded-t-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option value="languages">Languages</option>
+            <option value="frameworks">Frameworks</option>
+            <option value="tools">Tools</option>
         </select>
     </div>
-    <ul class="hidden text-sm w-full font-medium text-center text-gray-500 divide-x divide-gray-200 rounded-lg sm:flex dark:divide-gray-600 dark:text-gray-400 rtl:divide-x-reverse" id="fullWidthTab" data-tabs-toggle="#fullWidthTabContent" role="tablist">
-        <li class="w-full">
-            <button id="stats-tab" data-tabs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="true" class="inline-block w-full p-4 rounded-ss-lg bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Statistics</button>
-        </li>
-        <li class="w-full">
-            <button id="about-tab" data-tabs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="false" class="inline-block w-full p-4 bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Services</button>
-        </li>
-        <li class="w-full">
-            <button id="faq-tab" data-tabs-target="#faq" type="button" role="tab" aria-controls="faq" aria-selected="false" class="inline-block w-full p-4 rounded-se-lg bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">FAQ</button>
-        </li>
+
+    <ul class="hidden text-sm w-full font-medium text-center text-gray-500 divide-x divide-gray-200 rounded-lg sm:flex dark:divide-gray-600 dark:text-gray-400 rtl:divide-x-reverse" id="fullWidthTab" role="tablist">
+      <li class="w-full">
+          <button @click="tab = 'languages'" :aria-selected="tab === 'languages'" id="languages-tab" type="button" role="tab" aria-controls="languages" class="inline-block w-full p-4 rounded-ss-lg bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Languages</button>
+      </li>
+      <li class="w-full">
+          <button @click="tab = 'frameworks'" :aria-selected="tab === 'frameworks'" id="frameworks-tab" type="button" role="tab" aria-controls="frameworks" class="inline-block w-full p-4 bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Frameworks</button>
+      </li>
+      <li class="w-full">
+          <button @click="tab = 'tools'" :aria-selected="tab === 'tools'" id="tools-tab" type="button" role="tab" aria-controls="tools" class="inline-block w-full p-4 rounded-se-lg bg-gray-50 hover:bg-gray-100 focus:outline-none dark:bg-gray-700 dark:hover:bg-gray-600">Tools</button>
+      </li>
     </ul>
     <div id="fullWidthTabContent" class="border-t border-gray-200 dark:border-gray-600 w-full">
-        <div class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+        <div x-show="tab === 'languages'" class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800" id="languages" role="tabpanel" aria-labelledby="languages-tab">
             <dl class="grid max-w-screen-xl grid-cols-2 gap-8 p-4 mx-auto text-gray-900 sm:grid-cols-3 xl:grid-cols-5 dark:text-white sm:p-8">
                 <div class="flex flex-col items-center justify-center">
                     <img class="w-16 h-16" src="{{asset('assets/html-1.svg')}}" alt="HTML5 Logo" />
@@ -381,7 +385,7 @@
                 </div>
             </dl>
         </div>
-        <div class="hidden p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full" id="about" role="tabpanel" aria-labelledby="about-tab">
+        <div x-show="tab === 'frameworks'" class="p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800 w-full" id="frameworks" role="tabpanel" aria-labelledby="frameworks-tab">
         <dl class="grid max-w-screen-xl grid-cols-2 gap-8 p-4 mx-auto text-gray-900 sm:grid-cols-3 xl:grid-cols-4 dark:text-white sm:p-8">
                 <div class="flex flex-col items-center justify-center">
                     <img class="w-16 h-16" src="{{asset('assets/react-2.svg')}}" alt="HTML5 Logo" />
@@ -401,7 +405,7 @@
                 </div>
             </dl>
         </div>
-        <div class="hidden p-4 bg-white rounded-lg dark:bg-gray-800 w-full md:p-8" id="faq" role="tabpanel" aria-labelledby="faq-tab">
+        <div x-show="tab === 'tools'" class="p-4 bg-white rounded-lg dark:bg-gray-800 w-full md:p-8" id="tools" role="tabpanel" aria-labelledby="tools-tab">
         <dl class="grid max-w-screen-xl grid-cols-2 gap-8 p-4 mx-auto text-gray-900 sm:grid-cols-3 xl:grid-cols-5 dark:text-white sm:p-8">
                 <div class="flex flex-col items-center justify-center">
                     <img class="w-16 h-16" src="{{asset('assets/git-icon.svg')}}" alt="HTML5 Logo" />
@@ -435,7 +439,7 @@
   <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700 max-w-7xl">
 
 
-  <div class="flex flex-col items-center justify-items-center py-10">
+  <div class="hidden md:flex flex-col items-center justify-items-center py-10">
     <div class="max-w-5xl flex flex-col items-center justify-items-center max-h-3xl">
     <h2 class="text-2xl md:text-4xl font-bold dark:text-white max-w-4xl text-center -mb-20">Wait... <br/>Before you leave, are you the quickest mouse in the web? Make the spider fall!</h2>
     <canvas id="web"></canvas>
@@ -538,31 +542,7 @@
       drawerForm.classList.remove('transform', 'translate-x-0');
     });
 
-    document.addEventListener('DOMContentLoaded', (event) => {
-    const tabs = document.querySelectorAll('[role="tab"]');
-    const tabContents = document.querySelectorAll('[role="tabpanel"]');
 
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Deseleziona tutte le schede
-            tabs.forEach(t => {
-                t.setAttribute('aria-selected', false);
-            });
-
-            // Nasconde tutti i contenuti delle schede
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-
-            // Seleziona la scheda cliccata
-            tab.setAttribute('aria-selected', true);
-
-            // Mostra il contenuto della scheda corrispondente
-            const tabContent = document.querySelector(tab.getAttribute('data-tabs-target'));
-            tabContent.classList.remove('hidden');
-        });
-    });
-});
 
     !function (e, t, n) { function i(n, s) { if (!t[n]) { if (!e[n]) { var o = typeof require == "function" && require; if (!s && o) return o(n, !0); if (r) return r(n, !0); throw new Error("Cannot find module '" + n + "'") } var u = t[n] = { exports: {} }; e[n][0].call(u.exports, function (t) { var r = e[n][1][t]; return i(r ? r : t) }, u, u.exports) } return t[n].exports } var r = typeof require == "function" && require; for (var s = 0; s < n.length; s++)i(n[s]); return i }({ 1: [function (require, module, exports) { var VerletJS = require("./verlet"); var constraint = require("./constraint"); require("./objects"); window.Vec2 = require("./vec2"); window.VerletJS = VerletJS; window.Particle = VerletJS.Particle; window.DistanceConstraint = constraint.DistanceConstraint; window.PinConstraint = constraint.PinConstraint; window.AngleConstraint = constraint.AngleConstraint }, { "./verlet": 2, "./constraint": 3, "./objects": 4, "./vec2": 5 }], 3: [function (require, module, exports) { exports.DistanceConstraint = DistanceConstraint; exports.PinConstraint = PinConstraint; exports.AngleConstraint = AngleConstraint; function DistanceConstraint(a, b, stiffness, distance) { this.a = a; this.b = b; this.distance = typeof distance != "undefined" ? distance : a.pos.sub(b.pos).length(); this.stiffness = stiffness } DistanceConstraint.prototype.relax = function (stepCoef) { var normal = this.a.pos.sub(this.b.pos); var m = normal.length2(); normal.mutableScale((this.distance * this.distance - m) / m * this.stiffness * stepCoef); this.a.pos.mutableAdd(normal); this.b.pos.mutableSub(normal) }; DistanceConstraint.prototype.draw = function (ctx) { ctx.beginPath(); ctx.moveTo(this.a.pos.x, this.a.pos.y); ctx.lineTo(this.b.pos.x, this.b.pos.y); ctx.strokeStyle = "#d8dde2"; ctx.stroke() }; function PinConstraint(a, pos) { this.a = a; this.pos = (new Vec2).mutableSet(pos) } PinConstraint.prototype.relax = function (stepCoef) { this.a.pos.mutableSet(this.pos) }; PinConstraint.prototype.draw = function (ctx) { ctx.beginPath(); ctx.arc(this.pos.x, this.pos.y, 6, 0, 2 * Math.PI); ctx.fillStyle = "rgba(0,153,255,0.1)"; ctx.fill() }; function AngleConstraint(a, b, c, stiffness) { this.a = a; this.b = b; this.c = c; this.angle = this.b.pos.angle2(this.a.pos, this.c.pos); this.stiffness = stiffness } AngleConstraint.prototype.relax = function (stepCoef) { var angle = this.b.pos.angle2(this.a.pos, this.c.pos); var diff = angle - this.angle; if (diff <= -Math.PI) diff += 2 * Math.PI; else if (diff >= Math.PI) diff -= 2 * Math.PI; diff *= stepCoef * this.stiffness; this.a.pos = this.a.pos.rotate(this.b.pos, diff); this.c.pos = this.c.pos.rotate(this.b.pos, -diff); this.b.pos = this.b.pos.rotate(this.a.pos, diff); this.b.pos = this.b.pos.rotate(this.c.pos, -diff) }; AngleConstraint.prototype.draw = function (ctx) { ctx.beginPath(); ctx.moveTo(this.a.pos.x, this.a.pos.y); ctx.lineTo(this.b.pos.x, this.b.pos.y); ctx.lineTo(this.c.pos.x, this.c.pos.y); var tmp = ctx.lineWidth; ctx.lineWidth = 5; ctx.strokeStyle = "rgba(255,255,0,0.2)"; ctx.stroke(); ctx.lineWidth = tmp } }, {}], 5: [function (require, module, exports) { module.exports = Vec2; function Vec2(x, y) { this.x = x || 0; this.y = y || 0 } Vec2.prototype.add = function (v) { return new Vec2(this.x + v.x, this.y + v.y) }; Vec2.prototype.sub = function (v) { return new Vec2(this.x - v.x, this.y - v.y) }; Vec2.prototype.mul = function (v) { return new Vec2(this.x * v.x, this.y * v.y) }; Vec2.prototype.div = function (v) { return new Vec2(this.x / v.x, this.y / v.y) }; Vec2.prototype.scale = function (coef) { return new Vec2(this.x * coef, this.y * coef) }; Vec2.prototype.mutableSet = function (v) { this.x = v.x; this.y = v.y; return this }; Vec2.prototype.mutableAdd = function (v) { this.x += v.x; this.y += v.y; return this }; Vec2.prototype.mutableSub = function (v) { this.x -= v.x; this.y -= v.y; return this }; Vec2.prototype.mutableMul = function (v) { this.x *= v.x; this.y *= v.y; return this }; Vec2.prototype.mutableDiv = function (v) { this.x /= v.x; this.y /= v.y; return this }; Vec2.prototype.mutableScale = function (coef) { this.x *= coef; this.y *= coef; return this }; Vec2.prototype.equals = function (v) { return this.x == v.x && this.y == v.y }; Vec2.prototype.epsilonEquals = function (v, epsilon) { return Math.abs(this.x - v.x) <= epsilon && Math.abs(this.y - v.y) <= epsilon }; Vec2.prototype.length = function (v) { return Math.sqrt(this.x * this.x + this.y * this.y) }; Vec2.prototype.length2 = function (v) { return this.x * this.x + this.y * this.y }; Vec2.prototype.dist = function (v) { return Math.sqrt(this.dist2(v)) }; Vec2.prototype.dist2 = function (v) { var x = v.x - this.x; var y = v.y - this.y; return x * x + y * y }; Vec2.prototype.normal = function () { var m = Math.sqrt(this.x * this.x + this.y * this.y); return new Vec2(this.x / m, this.y / m) }; Vec2.prototype.dot = function (v) { return this.x * v.x + this.y * v.y }; Vec2.prototype.angle = function (v) { return Math.atan2(this.x * v.y - this.y * v.x, this.x * v.x + this.y * v.y) }; Vec2.prototype.angle2 = function (vLeft, vRight) { return vLeft.sub(this).angle(vRight.sub(this)) }; Vec2.prototype.rotate = function (origin, theta) { var x = this.x - origin.x; var y = this.y - origin.y; return new Vec2(x * Math.cos(theta) - y * Math.sin(theta) + origin.x, x * Math.sin(theta) + y * Math.cos(theta) + origin.y) }; Vec2.prototype.toString = function () { return "(" + this.x + ", " + this.y + ")" }; function test_Vec2() { var assert = function (label, expression) { console.log("Vec2(" + label + "): " + (expression == true ? "PASS" : "FAIL")); if (expression != true) throw "assertion failed" }; assert("equality", new Vec2(5, 3).equals(new Vec2(5, 3))); assert("epsilon equality", new Vec2(1, 2).epsilonEquals(new Vec2(1.01, 2.02), .03)); assert("epsilon non-equality", !new Vec2(1, 2).epsilonEquals(new Vec2(1.01, 2.02), .01)); assert("addition", new Vec2(1, 1).add(new Vec2(2, 3)).equals(new Vec2(3, 4))); assert("subtraction", new Vec2(4, 3).sub(new Vec2(2, 1)).equals(new Vec2(2, 2))); assert("multiply", new Vec2(2, 4).mul(new Vec2(2, 1)).equals(new Vec2(4, 4))); assert("divide", new Vec2(4, 2).div(new Vec2(2, 2)).equals(new Vec2(2, 1))); assert("scale", new Vec2(4, 3).scale(2).equals(new Vec2(8, 6))); assert("mutable set", new Vec2(1, 1).mutableSet(new Vec2(2, 3)).equals(new Vec2(2, 3))); assert("mutable addition", new Vec2(1, 1).mutableAdd(new Vec2(2, 3)).equals(new Vec2(3, 4))); assert("mutable subtraction", new Vec2(4, 3).mutableSub(new Vec2(2, 1)).equals(new Vec2(2, 2))); assert("mutable multiply", new Vec2(2, 4).mutableMul(new Vec2(2, 1)).equals(new Vec2(4, 4))); assert("mutable divide", new Vec2(4, 2).mutableDiv(new Vec2(2, 2)).equals(new Vec2(2, 1))); assert("mutable scale", new Vec2(4, 3).mutableScale(2).equals(new Vec2(8, 6))); assert("length", Math.abs(new Vec2(4, 4).length() - 5.65685) <= 1e-5); assert("length2", new Vec2(2, 4).length2() == 20); assert("dist", Math.abs(new Vec2(2, 4).dist(new Vec2(3, 5)) - 1.4142135) <= 1e-6); assert("dist2", new Vec2(2, 4).dist2(new Vec2(3, 5)) == 2); var normal = new Vec2(2, 4).normal(); assert("normal", Math.abs(normal.length() - 1) <= 1e-5 && normal.epsilonEquals(new Vec2(.4472, .89443), 1e-4)); assert("dot", new Vec2(2, 3).dot(new Vec2(4, 1)) == 11); assert("angle", new Vec2(0, -1).angle(new Vec2(1, 0)) * (180 / Math.PI) == 90); assert("angle2", new Vec2(1, 1).angle2(new Vec2(1, 0), new Vec2(2, 1)) * (180 / Math.PI) == 90); assert("rotate", new Vec2(2, 0).rotate(new Vec2(1, 0), Math.PI / 2).equals(new Vec2(1, 1))); assert("toString", new Vec2(2, 4) == "(2, 4)") } }, {}], 4: [function (require, module, exports) { var VerletJS = require("./verlet"); var Particle = VerletJS.Particle; var constraints = require("./constraint"); var DistanceConstraint = constraints.DistanceConstraint; VerletJS.prototype.point = function (pos) { var composite = new this.Composite; composite.particles.push(new Particle(pos)); this.composites.push(composite); return composite }; VerletJS.prototype.lineSegments = function (vertices, stiffness) { var i; var composite = new this.Composite; for (i in vertices) { composite.particles.push(new Particle(vertices[i])); if (i > 0) composite.constraints.push(new DistanceConstraint(composite.particles[i], composite.particles[i - 1], stiffness)) } this.composites.push(composite); return composite }; VerletJS.prototype.cloth = function (origin, width, height, segments, pinMod, stiffness) { var composite = new this.Composite; var xStride = width / segments; var yStride = height / segments; var x, y; for (y = 0; y < segments; ++y) { for (x = 0; x < segments; ++x) { var px = origin.x + x * xStride - width / 2 + xStride / 2; var py = origin.y + y * yStride - height / 2 + yStride / 2; composite.particles.push(new Particle(new Vec2(px, py))); if (x > 0) composite.constraints.push(new DistanceConstraint(composite.particles[y * segments + x], composite.particles[y * segments + x - 1], stiffness)); if (y > 0) composite.constraints.push(new DistanceConstraint(composite.particles[y * segments + x], composite.particles[(y - 1) * segments + x], stiffness)) } } for (x = 0; x < segments; ++x) { if (x % pinMod == 0) composite.pin(x) } this.composites.push(composite); return composite }; VerletJS.prototype.tire = function (origin, radius, segments, spokeStiffness, treadStiffness) { var stride = 2 * Math.PI / segments; var i; var composite = new this.Composite; for (i = 0; i < segments; ++i) { var theta = i * stride; composite.particles.push(new Particle(new Vec2(origin.x + Math.cos(theta) * radius, origin.y + Math.sin(theta) * radius))) } var center = new Particle(origin); composite.particles.push(center); for (i = 0; i < segments; ++i) { composite.constraints.push(new DistanceConstraint(composite.particles[i], composite.particles[(i + 1) % segments], treadStiffness)); composite.constraints.push(new DistanceConstraint(composite.particles[i], center, spokeStiffness)); composite.constraints.push(new DistanceConstraint(composite.particles[i], composite.particles[(i + 5) % segments], treadStiffness)) } this.composites.push(composite); return composite } }, { "./verlet": 2, "./constraint": 3 }], 2: [function (require, module, exports) { window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) { window.setTimeout(callback, 1e3 / 60) }; var Vec2 = require("./vec2"); exports = module.exports = VerletJS; exports.Particle = Particle; exports.Composite = Composite; function Particle(pos) { this.pos = (new Vec2).mutableSet(pos); this.lastPos = (new Vec2).mutableSet(pos) } Particle.prototype.draw = function (ctx) { ctx.beginPath(); ctx.arc(this.pos.x, this.pos.y, 2, 0, 2 * Math.PI); ctx.fillStyle = "#2dad8f"; ctx.fill() }; function VerletJS(width, height, canvas) { this.width = width; this.height = height; this.canvas = canvas; this.ctx = canvas.getContext("2d"); this.mouse = new Vec2(0, 0); this.mouseDown = false; this.draggedEntity = null; this.selectionRadius = 20; this.highlightColor = "#4f545c"; this.bounds = function (particle) { if (particle.pos.y > this.height - 1) particle.pos.y = this.height - 1; if (particle.pos.x < 0) particle.pos.x = 0; if (particle.pos.x > this.width - 1) particle.pos.x = this.width - 1 }; var _this = this; this.canvas.oncontextmenu = function (e) { e.preventDefault() }; this.canvas.onmousedown = function (e) { _this.mouseDown = true; var nearest = _this.nearestEntity(); if (nearest) { _this.draggedEntity = nearest } }; this.canvas.onmouseup = function (e) { _this.mouseDown = false; _this.draggedEntity = null }; this.canvas.onmousemove = function (e) { var rect = _this.canvas.getBoundingClientRect(); _this.mouse.x = e.clientX - rect.left; _this.mouse.y = e.clientY - rect.top }; this.gravity = new Vec2(0, .2); this.friction = .99; this.groundFriction = .8; this.composites = [] } VerletJS.prototype.Composite = Composite; function Composite() { this.particles = []; this.constraints = []; this.drawParticles = null; this.drawConstraints = null } Composite.prototype.pin = function (index, pos) { pos = pos || this.particles[index].pos; var pc = new PinConstraint(this.particles[index], pos); this.constraints.push(pc); return pc }; VerletJS.prototype.frame = function (step) { var i, j, c; for (c in this.composites) { for (i in this.composites[c].particles) { var particles = this.composites[c].particles; var velocity = particles[i].pos.sub(particles[i].lastPos).scale(this.friction); if (particles[i].pos.y >= this.height - 1 && velocity.length2() > 1e-6) { var m = velocity.length(); velocity.x /= m; velocity.y /= m; velocity.mutableScale(m * this.groundFriction) } particles[i].lastPos.mutableSet(particles[i].pos); particles[i].pos.mutableAdd(this.gravity); particles[i].pos.mutableAdd(velocity) } } if (this.draggedEntity) this.draggedEntity.pos.mutableSet(this.mouse); var stepCoef = 1 / step; for (c in this.composites) { var constraints = this.composites[c].constraints; for (i = 0; i < step; ++i)for (j in constraints) constraints[j].relax(stepCoef) } for (c in this.composites) { var particles = this.composites[c].particles; for (i in particles) this.bounds(particles[i]) } }; VerletJS.prototype.draw = function () { var i, c; this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); for (c in this.composites) { if (this.composites[c].drawConstraints) { this.composites[c].drawConstraints(this.ctx, this.composites[c]) } else { var constraints = this.composites[c].constraints; for (i in constraints) constraints[i].draw(this.ctx) } if (this.composites[c].drawParticles) { this.composites[c].drawParticles(this.ctx, this.composites[c]) } else { var particles = this.composites[c].particles; for (i in particles) particles[i].draw(this.ctx) } } var nearest = this.draggedEntity || this.nearestEntity(); if (nearest) { this.ctx.beginPath(); this.ctx.arc(nearest.pos.x, nearest.pos.y, 8, 0, 2 * Math.PI); this.ctx.strokeStyle = this.highlightColor; this.ctx.stroke() } }; VerletJS.prototype.nearestEntity = function () { var c, i; var d2Nearest = 0; var entity = null; var constraintsNearest = null; for (c in this.composites) { var particles = this.composites[c].particles; for (i in particles) { var d2 = particles[i].pos.dist2(this.mouse); if (d2 <= this.selectionRadius * this.selectionRadius && (entity == null || d2 < d2Nearest)) { entity = particles[i]; constraintsNearest = this.composites[c].constraints; d2Nearest = d2 } } } for (i in constraintsNearest) if (constraintsNearest[i] instanceof PinConstraint && constraintsNearest[i].a == entity) entity = constraintsNearest[i]; return entity } }, { "./vec2": 5 }] }, {}, [1]);
 
@@ -813,6 +793,7 @@
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       canvas.getContext("2d").scale(dpr, dpr);
+
 
       // simulation
       var sim = new VerletJS(width, height, canvas);
