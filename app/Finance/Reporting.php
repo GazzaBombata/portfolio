@@ -15,21 +15,40 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class Reporting
 {
-    /** Movimenti che rappresentano denaro davvero speso o incassato. */
-    public static function realMovements(): Builder
+    /**
+     * Movimenti che rappresentano denaro davvero speso o incassato, dentro il
+     * periodo e sui conti che si stanno guardando.
+     *
+     * @param  array<string, mixed>|null  $filters
+     */
+    public static function realMovements(?array $filters = null): Builder
     {
+        $period = Period::fromFilters($filters);
+
         return Transaction::query()
-            ->whereDoesntHave('category', fn (Builder $q) => $q->where('kind', 'transfer'));
+            ->whereDoesntHave('category', fn (Builder $q) => $q->where('kind', 'transfer'))
+            ->when($period->from, fn (Builder $q, $from) => $q->where('booked_on', '>=', $from))
+            ->when($period->to, fn (Builder $q, $to) => $q->where('booked_on', '<=', $to))
+            ->when(
+                filled($filters['accounts'] ?? null),
+                fn (Builder $q) => $q->whereIn('account_id', (array) $filters['accounts']),
+            );
     }
 
-    public static function expenses(): Builder
+    /**
+     * @param  array<string, mixed>|null  $filters
+     */
+    public static function expenses(?array $filters = null): Builder
     {
-        return static::realMovements()->where('amount', '<', 0);
+        return static::realMovements($filters)->where('amount', '<', 0);
     }
 
-    public static function income(): Builder
+    /**
+     * @param  array<string, mixed>|null  $filters
+     */
+    public static function income(?array $filters = null): Builder
     {
-        return static::realMovements()->where('amount', '>', 0);
+        return static::realMovements($filters)->where('amount', '>', 0);
     }
 
     public static function euro(float $amount): string

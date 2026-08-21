@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Finance\Reporting;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
@@ -18,11 +19,19 @@ use Illuminate\Support\Carbon;
  */
 class MonthlyFlowChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 2;
 
     protected ?string $heading = 'Entrate e uscite, mese per mese';
 
-    protected ?string $description = 'I giroconti fra conti tuoi sono esclusi.';
+    /*
+     * Segue il filtro dei conti ma non quello del periodo: è il riquadro che
+     * serve a vedere l'andamento, e con "questo mese" selezionato si
+     * ridurrebbe a una colonna sola — cioè a ripetere i numeri già scritti
+     * sopra, occupando mezza pagina.
+     */
+    protected ?string $description = 'Andamento completo, indipendente dal periodo scelto. Giroconti esclusi.';
 
     protected int|string|array $columnSpan = 'full';
 
@@ -35,8 +44,10 @@ class MonthlyFlowChart extends ChartWidget
     {
         $dal = $this->firstMonth();
 
-        $entrate = $this->perMonth(Reporting::income(), $dal);
-        $uscite = $this->perMonth(Reporting::expenses(), $dal);
+        $soloConti = ['periodo' => 'tutto', 'accounts' => $this->pageFilters['accounts'] ?? null];
+
+        $entrate = $this->perMonth(Reporting::income($soloConti), $dal);
+        $uscite = $this->perMonth(Reporting::expenses($soloConti), $dal);
 
         $mesi = [];
         $etichette = [];
@@ -96,7 +107,7 @@ class MonthlyFlowChart extends ChartWidget
      */
     private function firstMonth(): Carbon
     {
-        $primo = Reporting::realMovements()->min('booked_on');
+        $primo = Reporting::realMovements(['periodo' => 'tutto'])->min('booked_on');
         $tetto = now()->copy()->subMonths(11)->startOfMonth();
 
         if ($primo === null) {

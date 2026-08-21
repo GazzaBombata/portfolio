@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Finance\Reporting;
 use App\Models\Category;
 use Filament\Widgets\ChartWidget;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 /**
  * Dove sono finiti i soldi quest'anno, dalla voce più pesante in giù.
@@ -17,11 +18,13 @@ use Filament\Widgets\ChartWidget;
  */
 class SpendingByCategoryChart extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 3;
 
     protected ?string $heading = 'Spesa per categoria';
 
-    protected ?string $description = 'Da inizio anno, giroconti esclusi.';
+    protected ?string $description = 'Nel periodo selezionato, giroconti esclusi.';
 
     protected int|string|array $columnSpan = 'full';
 
@@ -32,9 +35,8 @@ class SpendingByCategoryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $righe = Reporting::expenses()
+        $righe = Reporting::expenses($this->pageFilters)
             ->whereNotNull('category_id')
-            ->where('booked_on', '>=', now()->startOfYear())
             ->selectRaw('category_id, SUM(amount) as totale')
             ->groupBy('category_id')
             ->orderByRaw('SUM(amount)')

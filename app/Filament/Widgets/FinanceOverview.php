@@ -2,8 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Finance\Period;
 use App\Finance\Reporting;
 use App\Models\Transaction;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -17,31 +19,41 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 class FinanceOverview extends StatsOverviewWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
 
     protected function getStats(): array
     {
-        $dal = now()->startOfMonth();
-        $al = now()->endOfMonth();
+        $filtri = $this->pageFilters;
+        $periodo = Period::fromFilters($filtri);
 
-        $entrate = (float) Reporting::income()->whereBetween('booked_on', [$dal, $al])->sum('amount');
-        $uscite = (float) Reporting::expenses()->whereBetween('booked_on', [$dal, $al])->sum('amount');
+        $entrate = (float) Reporting::income($filtri)->sum('amount');
+        $uscite = (float) Reporting::expenses($filtri)->sum('amount');
+
+        // Il "prima" con cui confrontare: lo stesso intervallo spostato
+        // indietro della propria durata, così un mese si confronta con un mese
+        // e un trimestre con un trimestre.
+        $precedente = $periodo->previous();
+        $usciteprima = (float) Reporting::expenses([
+            'periodo' => 'personalizzato',
+            'dal' => $precedente->from?->toDateString(),
+            'al' => $precedente->to?->toDateString(),
+            'accounts' => $filtri['accounts'] ?? null,
+        ])->sum('amount');
+
         $scoperti = Transaction::query()->whereNull('category_id')->count();
 
-        $meseScorso = (float) Reporting::expenses()
-            ->whereBetween('booked_on', [$dal->copy()->subMonth(), $dal->copy()->subDay()])
-            ->sum('amount');
-
         return [
-            Stat::make('Entrate del mese', Reporting::euro($entrate))
-                ->description(now()->translatedFormat('F Y'))
+            Stat::make('Entrate', Reporting::euro($entrate))
+                ->description($periodo->label)
                 ->color('info'),
 
-            Stat::make('Uscite del mese', Reporting::euro(abs($uscite)))
-                ->description($this->confronto($uscite, $meseScorso))
+            Stat::make('Uscite', Reporting::euro(abs($uscite)))
+                ->description($this->confronto($uscite, $usciteprima))
                 ->color('warning'),
 
-            Stat::make('Saldo del mese', Reporting::euro($entrate + $uscite))
+            Stat::make('Saldo', Reporting::euro($entrate + $uscite))
                 ->description($entrate + $uscite >= 0 ? 'in attivo' : 'in passivo')
                 ->color($entrate + $uscite >= 0 ? 'success' : 'danger'),
 
@@ -51,22 +63,19 @@ class FinanceOverview extends StatsOverviewWidget
         ];
     }
 
-    /** Il confronto col mese scorso, detto in parole invece che con una freccia. */
-    private function confronto(float $questoMese, float $meseScorso): string
+    /** Il confronto col periodo precedente, detto in parole invece che con una freccia. */
+    private function confronto(float $adesso, float $prima): string
     {
-        if ($meseScorso === 0.0) {
+        if ($prima === 0.0) {
             return 'nessun confronto disponibile';
         }
 
-        $differenza = abs($questoMese) - abs($meseScorso);
-        $percentuale = (int) round($differenza / abs($meseScorso) * 100);
+        $percentuale = (int) round((abs($adesso) - abs($prima)) / abs($prima) * 100);
 
         if (abs($percentuale) < 5) {
-            return 'come il mese scorso';
+            return 'come il periodo precedente';
         }
 
-        return $percentuale > 0
-            ? "+{$percentuale}% sul mese scorso"
-            : "{$percentuale}% sul mese scorso";
+        return ($percentuale > 0 ? '+' : '').$percentuale.'% sul periodo precedente';
     }
 }
