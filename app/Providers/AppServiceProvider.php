@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Finance\Ai\Classifier;
+use App\Finance\Ai\ClaudeClassifier;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(Classifier::class, fn (): ClaudeClassifier => new ClaudeClassifier(
+            apiKey: (string) config('ai.key'),
+            model: (string) config('ai.model'),
+        ));
     }
 
     /**
