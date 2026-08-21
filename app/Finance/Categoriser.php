@@ -24,7 +24,7 @@ class Categoriser
      */
     public function run(bool $onlyUncategorised = true): array
     {
-        $rules = CategoryRule::query()->orderBy('priority')->get();
+        $rules = CategoryRule::query()->with('category')->orderBy('priority')->get();
 
         if ($rules->isEmpty()) {
             return ['categorised' => 0, 'untouched' => 0];
@@ -67,9 +67,33 @@ class Categoriser
             $movement->description,
             $movement->raw_description,
             $movement->counterparty,
+            // La causale estesa: è lì che sta il mittente di un bonifico, e
+            // "ACCREDITO BONIFICO ISTANTANEO" da solo non dice niente.
+            $movement->notes,
         ]);
 
+        $isIncoming = (float) $movement->amount > 0;
+
         foreach ($rules as $rule) {
+            /*
+             * Il segno decide quali categorie sono ammissibili.
+             *
+             * Un accredito non è "Software e servizi" col meno davanti: è
+             * un'entrata, e va in una categoria di entrata. Senza questo
+             * controllo un rimborso finisce a ridurre una voce di spesa, e la
+             * categoria mostra un totale che non corrisponde a quanto è stato
+             * speso davvero.
+             */
+            $kind = $rule->category?->kind;
+
+            if ($kind === 'income' && ! $isIncoming) {
+                continue;
+            }
+
+            if ($kind === 'expense' && $isIncoming) {
+                continue;
+            }
+
             foreach ($haystacks as $haystack) {
                 if ($rule->matches($haystack)) {
                     return $rule;

@@ -104,3 +104,52 @@ it('non impara pattern troppo corti per distinguere qualcosa', function () {
 
     expect(app(Categoriser::class)->learnFrom($movimento))->toBeNull();
 });
+
+/*
+ * Un accredito non è "Software e servizi" col meno davanti. Era successo su
+ * otto entrate vere: finivano dentro voci di spesa, e quelle voci mostravano
+ * un totale più basso di quanto fosse stato speso davvero.
+ */
+it('non mette un\'entrata in una categoria di spesa', function () {
+    CategoryRule::create(['category_id' => $this->spesa->id, 'pattern' => 'RIMBORSO', 'match_type' => 'contains']);
+    $entrata = Transaction::factory()->create([
+        'account_id' => $this->account->id,
+        'amount' => 120.00,
+        'description' => 'RIMBORSO SPESE',
+        'raw_description' => 'RIMBORSO SPESE',
+    ]);
+
+    app(Categoriser::class)->run();
+
+    expect($entrata->fresh()->category_id)->toBeNull();
+});
+
+it('non mette un\'uscita in una categoria di entrata', function () {
+    $stipendio = Category::create(['name' => 'Stipendio', 'kind' => 'income']);
+    CategoryRule::create(['category_id' => $stipendio->id, 'pattern' => 'ACCREDITO', 'match_type' => 'contains']);
+    $uscita = Transaction::factory()->create([
+        'account_id' => $this->account->id,
+        'amount' => -50.00,
+        'description' => 'ACCREDITO STORNATO',
+        'raw_description' => 'ACCREDITO STORNATO',
+    ]);
+
+    app(Categoriser::class)->run();
+
+    expect($uscita->fresh()->category_id)->toBeNull();
+});
+
+it('classifica l\'entrata con una categoria di entrata', function () {
+    $stipendio = Category::create(['name' => 'Fatture e compensi', 'kind' => 'income']);
+    CategoryRule::create(['category_id' => $stipendio->id, 'pattern' => 'ACCREDITO BEU', 'match_type' => 'contains']);
+    $entrata = Transaction::factory()->create([
+        'account_id' => $this->account->id,
+        'amount' => 4500.00,
+        'description' => 'ACCREDITO BEU CON CONTABILE',
+        'raw_description' => 'ACCREDITO BEU CON CONTABILE',
+    ]);
+
+    app(Categoriser::class)->run();
+
+    expect($entrata->fresh()->category_id)->toBe($stipendio->id);
+});

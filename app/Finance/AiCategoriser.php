@@ -29,7 +29,34 @@ class AiCategoriser
      */
     public function run(?int $limit = null): array
     {
-        $merchants = $this->uncategorisedMerchants();
+        /*
+         * Due passate separate, una per il denaro che esce e una per quello che
+         * entra.
+         *
+         * Sono due domande diverse — "per cosa l'ho speso" e "da dove è
+         * arrivato" — e mescolarle significa offrire al modello solo categorie
+         * di spesa anche per uno stipendio. Fatto una volta: le entrate
+         * restavano scoperte, tranne otto finite dentro voci di spesa.
+         */
+        $totali = ['merchants' => 0, 'rules' => 0, 'categorised' => 0, 'undecided' => 0];
+
+        foreach (['expense', 'income'] as $kind) {
+            $esito = $this->runFor($kind, $limit);
+
+            foreach ($totali as $chiave => $valore) {
+                $totali[$chiave] = $valore + $esito[$chiave];
+            }
+        }
+
+        return $totali;
+    }
+
+    /**
+     * @return array{merchants: int, rules: int, categorised: int, undecided: int}
+     */
+    private function runFor(string $kind, ?int $limit): array
+    {
+        $merchants = $this->uncategorisedMerchants($kind);
 
         if ($limit !== null) {
             $merchants = $merchants->take($limit);
@@ -40,9 +67,13 @@ class AiCategoriser
         }
 
         $categories = Category::query()
-            ->where('kind', 'expense')
+            ->where('kind', $kind)
             ->get()
             ->mapWithKeys(fn (Category $c): array => [$c->fullName() => $c->id]);
+
+        if ($categories->isEmpty()) {
+            return ['merchants' => 0, 'rules' => 0, 'categorised' => 0, 'undecided' => 0];
+        }
 
         $decisions = [];
 
@@ -90,12 +121,18 @@ class AiCategoriser
      *
      * @return Collection<int, array{merchant: string, samples: array<int, string>, total: string, count: int}>
      */
-    private function uncategorisedMerchants(): Collection
+    private function uncategorisedMerchants(string $kind): Collection
     {
         $gruppi = [];
 
-        foreach (Transaction::query()->whereNull('category_id')->where('category_locked', false)->get() as $movement) {
-            $merchant = $this->merchantOf((string) ($movement->description ?? $movement->raw_description));
+        $movimenti = Transaction::query()
+            ->whereNull('category_id')
+            ->where('category_locked', false)
+            ->where('amount', $kind === 'income' ? '>' : '<', 0)
+            ->get();
+
+        foreach ($movimenti as $movement) {
+            $merchant = $this->nameFor($movement);
 
             if (mb_strlen($merchant) < 4) {
                 continue;
@@ -103,7 +140,12 @@ class AiCategoriser
 
             $gruppi[$merchant]['count'] = ($gruppi[$merchant]['count'] ?? 0) + 1;
             $gruppi[$merchant]['total'] = ($gruppi[$merchant]['total'] ?? 0) + (float) $movement->amount;
-            $gruppi[$merchant]['samples'][] = (string) $movement->description;
+            // Il campione utile è la causale estesa quando c'è: contiene il
+            // mittente e il riferimento alla fattura, cioè le uniche due cose
+            // che dicono di che entrata si tratta.
+            $gruppi[$merchant]['samples'][] = trim(mb_substr(
+                (string) ($movement->notes ?: $movement->description), 0, 160
+            ));
         }
 
         return collect($gruppi)
@@ -117,6 +159,37 @@ class AiCategoriser
             // comunque coperto quello che pesa di più.
             ->sortByDesc('count')
             ->values();
+    }
+
+    /**
+     * Con che nome chiamare questo movimento quando lo si chiede al modello.
+     *
+     * Per un pagamento in negozio è l'esercente. Per un bonifico l'esercente
+     * non esiste: la descrizione dice "ACCREDITO BONIFICO ISTANTANEO" e basta,
+     * uguale per tutti, mentre chi ha mandato i soldi sta nella causale estesa.
+     * Raggruppare per quella riga significherebbe un unico gruppo enorme con
+     * dentro clienti diversi; raggruppare per mittente dà gruppi veri, e le
+     * regole che ne nascono servono a qualcosa.
+     */
+    private function nameFor(Transaction $movement): string
+    {
+        $sender = $this->senderOf((string) $movement->notes);
+
+        if ($sender !== '') {
+            return $sender;
+        }
+
+        return $this->merchantOf((string) ($movement->description ?? $movement->raw_description));
+    }
+
+    /** Il mittente dichiarato in una causale di bonifico. */
+    private function senderOf(string $notes): string
+    {
+        if (preg_match('/MITT\.\s*:\s*(.+?)\s+(?:BENEF|BIC|COD|$)/iu', $notes, $matches) !== 1) {
+            return '';
+        }
+
+        return trim(preg_replace('/\s+/', ' ', $matches[1]) ?? '');
     }
 
     private function merchantOf(string $description): string
