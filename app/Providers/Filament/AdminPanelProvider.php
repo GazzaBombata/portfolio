@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -28,6 +29,21 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            /*
+             * Two-factor authentication, required rather than offered.
+             *
+             * Behind this login there are bank statements and health records
+             * for two people. A password alone is one leaked reuse away from
+             * all of it, so the second factor is not a setting someone can
+             * forget to switch on: `isRequired` sends anyone without it to the
+             * set-up screen at their next login.
+             */
+            ->multiFactorAuthentication(
+                AppAuthentication::make()
+                    ->recoverable()
+                    ->brandName('Giorgio Giotto'),
+                isRequired: true,
+            )
             ->colors([
                 'primary' => Color::Amber,
             ])
