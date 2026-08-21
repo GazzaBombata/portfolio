@@ -30,6 +30,15 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             /*
+             * Recupero password via email.
+             *
+             * Senza, l'unico modo per rientrare dopo aver perso la password è
+             * un comando sul server — e su questo server c'è la produzione di
+             * un'altra applicazione, che non è un posto dove andare a frugare
+             * per riprendersi il proprio account.
+             */
+            ->passwordReset()
+            /*
              * Two-factor authentication, required rather than offered.
              *
              * Behind this login there are bank statements and health records
