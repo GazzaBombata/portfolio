@@ -81,3 +81,4 @@ sail artisan finance:ai-categorise                  # il modello prende la coda
 |---|---|
 | **CLAUDE.md** (questo) | stack, convenzioni, decisioni |
 | `docs/deploy.md` | produzione, il server condiviso con TrackFlow, le trappole già pagate |
+| `docs/prossimi-lavori.md` | quello che è rimasto aperto, in ordine |
