@@ -11,7 +11,8 @@ Le convenzioni sono quelle condivise degli altri progetti in `projects/`:
 versioni stabili più recenti, dipendenze al minimo, niente plugin di terze parti
 strani.
 
-- **Backend**: Laravel 13, PHP ^8.3 (in locale gira 8.5)
+- **Backend**: Laravel 13, PHP 8.4 in locale e in produzione
+  (`config.platform.php` è fissato a 8.4.1: vedi `docs/deploy.md`)
 - **Admin/UI**: Filament 5 · **Frontend**: Livewire 4, Alpine · **CSS**: Tailwind 4, Vite
 - **DB**: MySQL 8 · **Code e cache**: Redis
 - **Test**: Pest 5 · **Lint**: Laravel Pint
@@ -22,6 +23,8 @@ strani.
 - **Locale**: Laravel Sail — usare **`sail artisan`**, non `php artisan`.
   Le porte host sono dedicate per convivere con gli altri progetti Sail
   (`FORWARD_DB_PORT`, `FORWARD_REDIS_PORT`, `APP_PORT`, `VITE_PORT` nel `.env`).
+- **In produzione i comandi manuali si scrivono `php8.4 artisan …`**: la CLI di
+  default del server è 8.3, che è la versione di TrackFlow.
 - **Produzione**: AWS `resilient-field`, deploy con Laravel Forge. Quel server
   ospita **anche TrackFlow**, che è produzione di un'altra applicazione: vedi
   `docs/deploy.md` prima di toccarlo.

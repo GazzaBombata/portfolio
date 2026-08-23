@@ -46,6 +46,23 @@ Serve perché è già andata male una volta: il lock generato su una macchina co
 8.5 pretendeva `symfony/console >= 8.4.1` su un server con 8.3, e il deploy è
 morto su `composer install` prima ancora di creare la release.
 
+### La CLI di default resta 8.3, e va bene così
+
+Sul server `php` senza numero è **8.3**, perché è la versione di TrackFlow, che
+sulla stessa macchina ha i suoi comandi schedulati. Cambiare il default a 8.4
+li sposterebbe tutti su una versione che nessuno ha provato con quel codice.
+
+Quindi **ogni comando manuale per questo sito va scritto `php8.4 artisan …`**.
+Il deploy non ne ha bisogno perché Forge usa `$FORGE_PHP`, che è già la
+versione configurata sul sito, e nemmeno il worker, che è stato creato con il
+percorso esplicito.
+
+Il sintomo, se lo si dimentica, è inconfondibile e sembra peggio di quello che
+è: `Composer detected issues in your platform: your dependencies require PHP
+>= 8.4.1. You are running 8.3.33`. Non è il sito rotto — è `platform_check`
+che fa il suo lavoro e rifiuta di eseguire codice su una versione che le
+dipendenze non supportano.
+
 La regola: **il server può avere una versione più alta del pin, mai più bassa.**
 Se un giorno la produzione passa a 8.5 o 8.6 va tutto bene senza toccare
 niente; se il progetto volesse alzare il minimo, prima si alza il PHP del
