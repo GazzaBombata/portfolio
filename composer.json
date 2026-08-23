@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -80,6 +83,7 @@
             "dont-discover": []
         }
     },
+    "_nota_platform": "config.platform.php dice a Composer per quale PHP risolvere le dipendenze, ed è fissato al MINIMO che la produzione garantisce — non a quello che gira sul portatile. Senza, Composer risolve per il PHP locale e produce un lock che il server non riesce a installare: è già successo, con symfony 8.1 che pretendeva 8.4.1 su un server con 8.3. Il server può avere una versione più alta, non più bassa.",
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
@@ -87,6 +91,9 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.4.1"
         }
     },
     "minimum-stability": "stable",
