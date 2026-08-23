@@ -19,29 +19,17 @@ lo sposta in fondo, sotto «Fatto», con una riga su com'è andata.
 - [ ] **121 movimenti ancora senza categoria.** Sono bonifici, postagiri e
       domiciliazioni che i dati non determinano — vanno decisi a mano dal
       pannello o via assistente. Ogni scelta diventa una regola permanente.
-- [ ] **Import dall'interfaccia.** Oggi si importa da riga di comando
-      (`finance:import`). Serve la schermata di caricamento con la scelta del
-      profilo, e la creazione di un profilo nuovo mappando le colonne.
 - [ ] **PDF degli estratti ING.** Per ora si usano i CSV, che sono molto più
       solidi. Se servisse davvero, va valutato un parser PDF.
-- [ ] **Tre giroconti restano ambigui** (più di un abbinamento possibile): il
-      comando li conta ma nessuna schermata li mostra. Servirebbe un elenco «da
-      confermare».
 
 ## Salute
 
-- [ ] **Grafici.** Ci sono le schermate e il riquadro settimanale, ma non un
-      andamento del peso o del sonno nel tempo.
-- [ ] **Inserimento veloce da telefono.** L'assistente copre il caso, ma una
-      schermata «oggi» con quattro campi sarebbe più diretta.
+Niente di aperto.
 
 ## Assistente
 
 - [ ] **Streaming della risposta.** Adesso compare tutta insieme dopo qualche
       secondo di «Sto lavorando…».
-- [ ] **Tetto di spesa.** Non c'è nessun limite né conteggio del costo delle
-      chiamate: in `personal-ticketing` esiste `AiBudget`, andrebbe portato qui.
-- [ ] **Fermare un turno in corso.**
 
 ## Infrastruttura
 
@@ -54,6 +42,15 @@ lo sposta in fondo, sotto «Fatto», con una riga su com'è andata.
       comunque stop/start. Rimandato finché la chat non è davvero in uso.
 
 ## Fatto
+
+- [x] Import dall'interfaccia, con i profili di mappatura modificabili (23/08/2026)
+- [x] Elenco dei giroconti dubbi, con conferma a un clic
+- [x] Tetto di spesa sulle chiamate AI, con conteggio dei costi
+- [x] Grafici di peso e sonno, e la schermata «Oggi» per l'inserimento veloce
+- [x] Pulsante per fermare un turno dell'assistente
+- [x] Scanner di sicurezza scritto e provato sul server
+- [x] Merge in `main` (resta da fare il push)
+- [x] Reboot del server
 
 - [x] Ricostruzione del progetto sullo stack corrente (21/08/2026)
 - [x] Import degli estratti conto di cinque istituti, 664 movimenti
