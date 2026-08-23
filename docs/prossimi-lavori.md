@@ -3,20 +3,18 @@
 Quello che è rimasto aperto, in ordine di quanto è bloccante. Chi ne prende uno
 lo sposta in fondo, sotto «Fatto», con una riga su com'è andata.
 
-## Prima di mandare in produzione
+## In produzione (fatto il 23/08/2026)
 
-- [ ] **Mergiare `ricostruzione-tracker` in `main`.** Finché non succede, su
-      giorgiogiotto.it c'è ancora la vecchia landing Laravel 10.
-- [ ] **Worker della coda su Forge.** L'assistente gira in job: senza un daemon
-      `queue:work` la chat resta su «Sto lavorando…» per sempre. Va aggiunto
-      come daemon, e `php artisan queue:restart` va messo nello script di
-      deploy.
-- [ ] **Provare l'invio email dalla produzione** con il reset password vero, non
-      solo con `Mail::raw`.
+Il sito è online sul codice nuovo, con i dati dentro. Restano da fare le cose
+elencate sotto, ma niente di bloccante.
 
 ## Portare i dati in produzione
 
-- [ ] **Travasare il database locale.** In locale ci sono già i 664 movimenti
+- [x] ~~**Travasare il database locale.**~~ Fatto il 23/08/2026: 664 movimenti,
+      112 regole, cinque profili e l'utente. Le due trappole descritte qui
+      sotto si sono presentate entrambe — la seconda no, gli id combaciavano.
+
+  Dettagli del travaso, tenuti perché serviranno alla prossima volta: In locale ci sono già i 664 movimenti
       importati, i giroconti riconosciuti, le 112 regole di categorizzazione e
       i cinque profili di importazione: rifare tutto in produzione a mano non
       ha senso. Un dump e un restore.
@@ -36,6 +34,11 @@ lo sposta in fondo, sotto «Fatto», con una riga su com'è andata.
       Le tabelle da portare: `accounts`, `categories`, `category_rules`,
       `import_profiles`, `statement_imports`, `transactions`, più quelle della
       salute se nel frattempo ci finisce dentro qualcosa.
+
+      E una terza trappola, scoperta sul campo: **il file del dump non può
+      stare in `/home/forge`.** Quella cartella ha una ACL `group:isolated:---`
+      che nega tutto all'utente del sito — è l'isolamento fra i due siti, e
+      blocca anche noi. Va passato da `/tmp`, e cancellato subito dopo.
 
 ## Spese
 
@@ -82,3 +85,5 @@ Niente di aperto.
 - [x] Salute: sonno, allenamenti, pasti, acqua, peso
 - [x] Assistente in linguaggio naturale
 - [x] 2FA obbligatorio, reset password, database separato da TrackFlow
+- [x] Deploy in produzione: PHP 8.4, worker sulla coda Redis, SMTP funzionante,
+      icone e manifest, push-to-deploy attivo (23/08/2026)
