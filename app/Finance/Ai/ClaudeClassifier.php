@@ -3,6 +3,8 @@
 namespace App\Finance\Ai;
 
 use Anthropic\Client;
+use App\Ai\Budget;
+use App\Ai\Pricing;
 use Illuminate\Support\Facades\Log;
 use JsonException;
 use RuntimeException;
@@ -34,6 +36,10 @@ class ClaudeClassifier implements Classifier
         if ($merchants === []) {
             return [];
         }
+
+        // Prima di spendere, non dopo.
+        Pricing::ensurePriced($this->model);
+        Budget::guard();
 
         $client = new Client(apiKey: $this->apiKey);
 
@@ -67,6 +73,8 @@ class ClaudeClassifier implements Classifier
                 .config('ai.batch_size').') e riprova.'
             );
         }
+
+        Budget::record('classificazione', $this->model, $message->usage);
 
         if ($message->stopReason === 'refusal') {
             throw new RuntimeException('Il modello ha rifiutato di rispondere a questa richiesta.');

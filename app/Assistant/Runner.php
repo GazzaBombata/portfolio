@@ -3,6 +3,8 @@
 namespace App\Assistant;
 
 use Anthropic\Client;
+use App\Ai\Budget;
+use App\Ai\Pricing;
 use App\Assistant\Tools\CategoriseTransactionsTool;
 use App\Assistant\Tools\HealthSummaryTool;
 use App\Assistant\Tools\LogBodyMetricTool;
@@ -49,6 +51,8 @@ class Runner
             throw new RuntimeException('ANTHROPIC_API_KEY mancante: impostala per usare l\'assistente.');
         }
 
+        Pricing::ensurePriced($this->model);
+
         $client = new Client(apiKey: $this->apiKey);
         $registry = $this->tools();
         $schemas = $this->schemas($registry);
@@ -56,6 +60,10 @@ class Runner
         $steps = [];
 
         for ($round = 0; $round < self::MAX_ROUNDS; $round++) {
+            // Controllato a ogni giro e non solo all'inizio: un turno con
+            // molti passaggi può sfondare il tetto da solo.
+            Budget::guard();
+
             $response = $client->messages->create(
                 model: $this->model,
                 maxTokens: 8192,
@@ -63,6 +71,8 @@ class Runner
                 messages: $messages,
                 tools: $schemas,
             );
+
+            Budget::record('assistente', $this->model, $response->usage);
 
             if ($response->stopReason === 'refusal') {
                 return ['content' => 'Non me la sento di rispondere a questa richiesta.', 'steps' => $steps];
