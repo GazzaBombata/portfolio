@@ -14,7 +14,13 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# Gli asset compilati stanno nel repo di proposito.
+#
+# Il server ha 2 GB di RAM condivisi con la produzione di un'altra
+# applicazione, e `npm run build` ha un picco di 1–1,5 GB: farlo girare lì
+# significa mettere l'OOM killer nella posizione di scegliere fra il deploy e
+# il database delle fatture. Si builda qui e si carica il risultato.
+# public/build
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage

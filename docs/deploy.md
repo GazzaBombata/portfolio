@@ -19,7 +19,9 @@ produzione di un'altra applicazione. Due conseguenze pratiche:
 2. **La memoria è condivisa.** 2 GB in tutto, con MySQL, Redis e i worker di
    TrackFlow già dentro. `npm run build` sul server ha un picco di 1–1,5 GB: se
    il deploy dovesse incontrare l'OOM killer, la vittima probabile è `mysqld`.
-   In quel caso, buildare gli asset in locale e caricare `public/build`.
+   Per questo **gli asset compilati stanno nel repo** (`public/build` è
+   versionato) e lo script di deploy **non deve contenere `npm run build`**:
+   si builda in locale con `sail npm run build` e si committa il risultato.
 
 ### Isolamento
 
