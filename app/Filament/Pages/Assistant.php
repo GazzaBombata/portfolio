@@ -70,6 +70,20 @@ class Assistant extends Page
         unset($this->messages, $this->thinking);
     }
 
+    /**
+     * Ferma il turno in corso.
+     *
+     * Non uccide il worker — sta aspettando la rete — ma gli dice di non fare
+     * il giro successivo. Quello che ha già eseguito resta eseguito, e la
+     * risposta lo dice invece di far finta di niente.
+     */
+    public function stop(): void
+    {
+        AssistantMessage::query()->where('status', 'pending')->update(['status' => 'stopped']);
+
+        unset($this->messages, $this->thinking);
+    }
+
     public function clear(): void
     {
         AssistantMessage::query()->delete();

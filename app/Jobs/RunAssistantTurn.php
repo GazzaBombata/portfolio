@@ -52,12 +52,19 @@ class RunAssistantTurn implements ShouldQueue
         Auth::setUser($user);
 
         try {
-            $esito = $runner->run($this->question);
+            // Lo stop arriva da un'altra richiesta HTTP, che scrive sulla riga:
+            // il worker lo scopre rileggendola, che è l'unico canale che i due
+            // processi hanno in comune.
+            $esito = $runner->run($this->question, fn (): bool => AssistantMessage::query()
+                ->withoutGlobalScope('user')
+                ->whereKey($this->messageId)
+                ->where('status', 'stopped')
+                ->exists());
 
             AssistantMessage::query()->whereKey($this->messageId)->update([
                 'content' => $esito['content'],
                 'steps' => $esito['steps'],
-                'status' => 'done',
+                'status' => ($esito['stopped'] ?? false) ? 'stopped' : 'done',
             ]);
         } catch (Throwable $e) {
             AssistantMessage::query()->whereKey($this->messageId)->update([

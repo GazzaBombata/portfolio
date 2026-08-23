@@ -45,7 +45,14 @@ class Runner
     /**
      * @return array{content: string, steps: array<int, array{tool: string, summary: ?string}>}
      */
-    public function run(string $question): array
+    /**
+     * @param  (callable(): bool)|null  $shouldStop  chiamata fra un giro e
+     *                                               l'altro: se torna true, il
+     *                                               turno si chiude con quello
+     *                                               che ha raccolto.
+     * @return array{content: string, steps: array<int, array{tool: string, summary: ?string}>, stopped?: bool}
+     */
+    public function run(string $question, ?callable $shouldStop = null): array
     {
         if ($this->apiKey === '') {
             throw new RuntimeException('ANTHROPIC_API_KEY mancante: impostala per usare l\'assistente.');
@@ -60,6 +67,25 @@ class Runner
         $steps = [];
 
         for ($round = 0; $round < self::MAX_ROUNDS; $round++) {
+            /*
+             * Fermato da chi guarda.
+             *
+             * Il controllo sta qui e non dentro la chiamata perché è lì che il
+             * turno è interrompibile senza lasciare le cose a metà: gli
+             * strumenti di questo giro sono stati eseguiti fino in fondo, e
+             * quello che hanno scritto resta scritto — dirlo è meglio che
+             * fingere che il turno non sia mai esistito.
+             */
+            if ($shouldStop !== null && $shouldStop()) {
+                return [
+                    'content' => $steps === []
+                        ? 'Fermato prima di fare qualsiasi cosa.'
+                        : 'Fermato. Quello che avevo già eseguito è stato fatto — lo vedi qui sopra.',
+                    'steps' => $steps,
+                    'stopped' => true,
+                ];
+            }
+
             // Controllato a ogni giro e non solo all'inizio: un turno con
             // molti passaggi può sfondare il tetto da solo.
             Budget::guard();

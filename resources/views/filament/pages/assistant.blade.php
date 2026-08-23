@@ -108,6 +108,8 @@
                                 </div>
                             @elseif ($messaggio->status === 'failed')
                                 <div class="ga-bubble failed">{{ $messaggio->content }}</div>
+                            @elseif ($messaggio->status === 'stopped')
+                                <div class="ga-bubble theirs">{{ $messaggio->content ?: 'Fermato.' }}</div>
                             @else
                                 <div class="ga-bubble theirs">{{ $messaggio->content }}</div>
                             @endif
@@ -132,6 +134,11 @@
                 x-data
                 x-on:keydown.enter="if (! $event.shiftKey) { $event.preventDefault(); $wire.send(); }"
             ></textarea>
+            @if ($thinking)
+                <x-filament::button type="button" color="gray" icon="heroicon-m-stop" wire:click="stop">
+                    Ferma
+                </x-filament::button>
+            @endif
             <x-filament::button type="submit" icon="heroicon-m-paper-airplane">Invia</x-filament::button>
         </form>
     </div>

@@ -213,3 +213,25 @@ it('non accusa quando ha solo cercato e lo dice', function () {
 
     expect($risposta)->not->toContain('Attenzione');
 });
+
+it('ferma un turno in corso senza cancellare quello che ha già fatto', function () {
+    AssistantMessage::create(['role' => 'assistant', 'content' => null, 'status' => 'pending']);
+
+    Livewire::test(Assistant::class)->call('stop');
+
+    expect(AssistantMessage::sole()->status)->toBe('stopped');
+});
+
+/*
+ * Il worker non si può uccidere da fuori: sta aspettando la rete. Quello che
+ * si può fare è dirgli di non fare il giro successivo, e il canale fra i due
+ * processi è la riga sul database.
+ */
+it('chiude il turno dicendo che è stato fermato', function () {
+    $runner = new Runner('chiave-finta', 'claude-opus-5');
+
+    $esito = $runner->run('qualcosa', fn (): bool => true);
+
+    expect($esito['stopped'])->toBeTrue()
+        ->and($esito['content'])->toContain('Fermato');
+});
