@@ -36,6 +36,26 @@ gli asset statici.
 Per eseguire comandi come utente del sito senza sudo: **Forge → il sito →
 Commands**.
 
+## La versione di PHP
+
+Il server deve avere **almeno PHP 8.4.1**. Non è un capriccio: `composer.json`
+fissa `config.platform.php` a quel numero, e Composer risolve le dipendenze
+contro di lui invece che contro il PHP del portatile.
+
+Serve perché è già andata male una volta: il lock generato su una macchina con
+8.5 pretendeva `symfony/console >= 8.4.1` su un server con 8.3, e il deploy è
+morto su `composer install` prima ancora di creare la release.
+
+La regola: **il server può avere una versione più alta del pin, mai più bassa.**
+Se un giorno la produzione passa a 8.5 o 8.6 va tutto bene senza toccare
+niente; se il progetto volesse alzare il minimo, prima si alza il PHP del
+server e poi si sposta il pin — in quest'ordine.
+
+Vale anche per l'ambiente locale: `compose.yaml` usa il runtime Sail 8.4 per
+stare sulla stessa versione della produzione. Locale e produzione che divergono
+è esattamente ciò che ha prodotto un lock che nessuno riusciva a installare, e
+lo si scopre solo con un deploy fallito.
+
 ## Email
 
 Le caselle del dominio stanno su **SiteGround**, non su AWS. Il record `A` del
