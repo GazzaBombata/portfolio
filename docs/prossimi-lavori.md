@@ -14,6 +14,29 @@ lo sposta in fondo, sotto «Fatto», con una riga su com'è andata.
 - [ ] **Provare l'invio email dalla produzione** con il reset password vero, non
       solo con `Mail::raw`.
 
+## Portare i dati in produzione
+
+- [ ] **Travasare il database locale.** In locale ci sono già i 664 movimenti
+      importati, i giroconti riconosciuti, le 112 regole di categorizzazione e
+      i cinque profili di importazione: rifare tutto in produzione a mano non
+      ha senso. Un dump e un restore.
+
+      Attenzione a due cose:
+
+      - **Non portare la tabella `users`.** In locale c'è un utente con
+        password nota e un secondo fattore di prova: in produzione l'account si
+        crea con `make:filament-user`, e la sua password non deve mai essere
+        stata scritta da nessuna parte.
+      - **Gli `user_id` devono corrispondere.** Tutte le righe puntano
+        all'utente locale: se l'account creato in produzione non ha lo stesso
+        id, i dati arrivano ma non li vede nessuno — lo scoping fallisce
+        chiuso, quindi si presentano come un pannello vuoto e non come un
+        errore. Verificare l'id prima del restore, o riallinearlo dopo.
+
+      Le tabelle da portare: `accounts`, `categories`, `category_rules`,
+      `import_profiles`, `statement_imports`, `transactions`, più quelle della
+      salute se nel frattempo ci finisce dentro qualcosa.
+
 ## Spese
 
 - [ ] **121 movimenti ancora senza categoria.** Sono bonifici, postagiri e
