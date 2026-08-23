@@ -79,14 +79,24 @@ Le caselle del dominio stanno su **SiteGround**, non su AWS. Il record `A` del
 dominio punta ad AWS; `mail`, `webmail` e gli `MX` restano dove sono.
 
 ```dotenv
+MAIL_MAILER=smtp
 MAIL_HOST=mail.giorgiogiotto.it
 MAIL_PORT=465
-MAIL_ENCRYPTION=ssl
+MAIL_SCHEME=smtps
+MAIL_USERNAME=notifications@giorgiogiotto.it
+MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS=notifications@giorgiogiotto.it
 ```
 
+⚠️ **`MAIL_SCHEME`, non `MAIL_ENCRYPTION`.** Da Laravel 11 quest'ultima non
+viene più letta: `config/mail.php` prende `env('MAIL_SCHEME')` e basta. Con lo
+schema vuoto Symfony apre una connessione in chiaro sulla 465 — che pretende
+TLS dal primo byte — e il risultato è un invio che non parte senza un errore
+comprensibile. Vale `smtps` per la 465 (TLS implicito) e `smtp` per la 587
+(STARTTLS).
+
 Dal server AWS la 465 e la 587 sono raggiungibili; la 25 è bloccata in uscita,
-come su ogni EC2 — non serve. Se la 465 desse timeout, ripiegare su 587 con
-`MAIL_ENCRYPTION=tls`.
+come su ogni EC2 — non serve. Se la 465 desse timeout, ripiegare su 587 con `MAIL_SCHEME=smtp`.
 
 `APP_URL` deve essere in **https**: da lì Laravel costruisce i link delle email,
 compreso quello di reset password.
