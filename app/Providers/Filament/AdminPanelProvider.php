@@ -26,6 +26,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // Il pannello è la parte che finisce salvata sulla home del
+            // telefono: stessa icona del sito, non quella di Filament.
+            ->favicon(asset('icons/icon-192.png'))
+            ->brandName('Giorgio Giotto')
             ->login()
             /*
              * Recupero password via email.

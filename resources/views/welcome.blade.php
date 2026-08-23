@@ -12,10 +12,22 @@
     <meta property="og:description" content="Lavoro tra business, operations e IT su processi complessi e sistemi che non si parlano tra loro.">
     <meta property="og:type" content="profile">
     <meta property="og:url" content="https://giorgiogiotto.it">
-    <meta property="og:image" content="https://giorgiogiotto.it/img/giorgio.png">
+    <meta property="og:image" content="https://giorgiogiotto.it/icons/icon-512.png">
     <meta name="twitter:card" content="summary">
 
-    <link rel="icon" href="/img/favicon.jpg">
+    {{-- Icone.
+         `favicon.ico` con dentro 16/32/48 resta per i browser che cercano
+         ancora quella; il PNG serve a tutti gli altri. `apple-touch-icon` è
+         quadrata piena e senza trasparenza di proposito: iOS smussa da sé gli
+         angoli, e una PNG con alpha diventa un rettangolo nero sulla home del
+         telefono. Il manifest è ciò che rende decente il salvataggio su
+         Android — senza, il sistema ritaglia una miniatura della pagina. --}}
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icons/icon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1a5490">
+    <meta name="apple-mobile-web-app-title" content="Giotto">
     <link rel="canonical" href="https://giorgiogiotto.it">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
