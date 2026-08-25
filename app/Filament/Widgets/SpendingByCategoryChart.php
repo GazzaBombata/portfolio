@@ -24,7 +24,10 @@ class SpendingByCategoryChart extends ChartWidget
 
     protected ?string $heading = 'Spesa per categoria';
 
-    protected ?string $description = 'Nel periodo selezionato, giroconti esclusi.';
+    public function getDescription(): ?string
+    {
+        return 'Nel periodo selezionato, giroconti esclusi.'.Reporting::excludedLabel($this->pageFilters);
+    }
 
     protected int|string|array $columnSpan = 'full';
 

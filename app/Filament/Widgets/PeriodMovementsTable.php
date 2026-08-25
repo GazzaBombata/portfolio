@@ -43,7 +43,8 @@ class PeriodMovementsTable extends TableWidget
 
         return $table
             ->heading('Movimenti')
-            ->description('Quello che compone i numeri qui sopra, per '.$periodo->label.'.')
+            ->description('Quello che compone i numeri qui sopra, per '.$periodo->label.'.'
+                .Reporting::excludedLabel($this->pageFilters))
             ->query(fn (): Builder => Reporting::realMovements($this->pageFilters)->with(['account', 'category']))
             ->defaultSort('booked_on', 'desc')
             ->defaultPaginationPageOption(10)

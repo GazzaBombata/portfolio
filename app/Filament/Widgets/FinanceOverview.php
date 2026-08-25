@@ -50,7 +50,7 @@ class FinanceOverview extends StatsOverviewWidget
                 ->color('info'),
 
             Stat::make('Uscite', Reporting::euro(abs($uscite)))
-                ->description($this->confronto($uscite, $usciteprima))
+                ->description(trim($this->confronto($uscite, $usciteprima).Reporting::excludedLabel($filtri)))
                 ->color('warning'),
 
             Stat::make('Saldo', Reporting::euro($entrate + $uscite))

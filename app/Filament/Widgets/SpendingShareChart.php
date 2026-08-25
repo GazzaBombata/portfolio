@@ -29,7 +29,11 @@ class SpendingShareChart extends ChartWidget
 
     protected ?string $heading = 'Come si distribuiscono le uscite';
 
-    protected ?string $description = 'Quanto pesa ogni categoria sul totale del periodo. Giroconti esclusi.';
+    public function getDescription(): ?string
+    {
+        return 'Quanto pesa ogni categoria sul totale del periodo. Giroconti esclusi.'
+            .Reporting::excludedLabel($this->pageFilters);
+    }
 
     /** Quante fette prima di raccogliere il resto sotto «Altro». */
     private const FETTE = 4;

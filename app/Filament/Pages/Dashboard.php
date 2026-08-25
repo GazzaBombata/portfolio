@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Account;
+use App\Models\Category;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -61,6 +62,28 @@ class Dashboard extends BaseDashboard
                         ->multiple()
                         ->options(fn (): array => Account::query()->orderBy('name')->pluck('name', 'id')->all())
                         ->placeholder('Tutti i conti'),
+
+                    /*
+                     * Togliere di mezzo qualcosa per vedere il resto.
+                     *
+                     * Serve quando una voce sola schiaccia tutte le altre — le
+                     * tasse valgono metà del grafico — e la domanda diventa
+                     * «e a parte quello?». Escludere una categoria principale
+                     * esclude anche le sue sottocategorie: nessuno intende
+                     * «togli Lavoro ma lasciami dentro Lavoro · Software».
+                     */
+                    Select::make('exclude_categories')
+                        ->label('Escludi')
+                        ->multiple()
+                        ->options(fn (): array => Category::query()
+                            ->with('parent')
+                            ->orderBy('parent_id')
+                            ->get()
+                            ->mapWithKeys(fn (Category $c): array => [$c->id => $c->fullName()])
+                            ->all())
+                        ->searchable()
+                        ->placeholder('Niente')
+                        ->helperText('Le voci escluse spariscono da tutti i numeri qui sotto.'),
                 ])
                 ->columns(4),
         ]);
