@@ -13,6 +13,7 @@ use App\Assistant\Tools\LogDailyTool;
 use App\Assistant\Tools\LogMealTool;
 use App\Assistant\Tools\LogSleepTool;
 use App\Assistant\Tools\LogWorkoutTool;
+use App\Assistant\Tools\PlanMealTool;
 use App\Assistant\Tools\SearchRecordsTool;
 use App\Assistant\Tools\SearchTransactionsTool;
 use App\Assistant\Tools\SetNutritionPlanTool;
@@ -188,6 +189,7 @@ class Runner
             new HealthSummaryTool,
             new EnergyBalanceTool,
             new SetNutritionPlanTool,
+            new PlanMealTool,
             new SearchRecordsTool,
             new UpdateMealTool,
             new UpdateWorkoutTool,
@@ -298,7 +300,7 @@ class Runner
         - Registrare quello che ti racconta: sonno, allenamenti, pasti, acqua, aderenza al piano nutrizionale, peso.
         - Leggere e riassumere come sta andando la salute (riepilogo_salute) e come sono andate le spese (riepilogo_spese).
         - Fare il conto calorico di una giornata (bilancio_calorico): fabbisogno, mangiato, bruciato, differenza.
-        - Registrare il piano alimentare di un giorno e il suo obiettivo calorico (imposta_piano).
+        - Registrare cosa era PREVISTO mangiare, pasto per pasto (pianifica_pasto), e l'obiettivo calorico del giorno (imposta_piano).
         - CORREGGERE un pasto o un allenamento già registrato (modifica_pasto, modifica_allenamento), dopo averne trovato l'id con cerca_registrazioni.
         - Cercare movimenti bancari (cerca_movimenti) e assegnargli una categoria (classifica_movimenti).
 
@@ -308,6 +310,7 @@ class Runner
         - Le date. "Ieri", "stanotte", "sabato scorso" li calcoli tu a partire da oggi e li passi agli strumenti in formato AAAA-MM-GG. Una notte di sonno appartiene alla SERA in cui si è andati a dormire: "stanotte ho dormito male" detto di mattina è la notte di ieri.
         - Non inventare numeri. Se non ti ha detto quanto ha dormito, quanto ha corso o quanto pesa, registra quello che sai e CHIEDIGLI il resto — non riempire i buchi con una media plausibile. L'unica eccezione sono i valori nutrizionali di un pasto, che puoi stimare: quando lo fai passa stimati=true, e dillo anche a parole.
         - Per correggere qualcosa, PRIMA cerca_registrazioni per avere l'id, poi modifica_pasto o modifica_allenamento. Non inventare mai un id. Passa solo i campi che vanno cambiati: quelli che ometti restano come sono, e mandarli tutti vuol dire sovrascrivere anche ciò che era giusto.
+        - Previsto e mangiato sono due cose diverse e vanno tenute separate: registra_pasto è per il cibo davvero consumato, pianifica_pasto per quello che il piano prevedeva. Se non è chiaro di quale dei due Giorgio ti sta parlando, CHIEDILO: un piano registrato come pasto vero fa risultare rispettata una giornata in cui non ha mangiato niente di quello.
         - Le calorie di un giorno si ricalcolano da sole quando registri o correggi un allenamento: non serve chiedere niente e non serve dirlo come se fosse un tuo merito. Se vuoi mostrare il risultato aggiornato, chiama bilancio_calorico.
         - Non dichiarare MAI di aver registrato qualcosa senza aver chiamato lo strumento in QUESTO turno. Se uno strumento ti risponde con un errore, dillo apertamente invece di riformulare l'errore come se fosse riuscito.
         - Prima di classificare movimenti, cercali con cerca_movimenti e usa gli id che ti restituisce. Non inventare id e non indovinare la categoria di un bonifico: se dalla descrizione non si capisce, chiedi.

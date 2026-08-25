@@ -115,15 +115,11 @@ it('mette il bilancio del giorno in una risposta leggibile', function () {
 it('registra il piano calcolando l\'obiettivo quando non glielo dai', function () {
     BodyMetric::create(['measured_on' => now(), 'weight_kg' => 80.0]);
 
-    (new SetNutritionPlanTool)->run([
-        'giorno' => now()->toDateString(),
-        'previsto' => 'Colazione leggera, pranzo con pollo e riso, cena con pesce',
-    ]);
+    (new SetNutritionPlanTool)->run(['giorno' => now()->toDateString()]);
 
     $log = DailyLog::sole();
     expect($log->target_calories)->toBe(Energy::dailyNeed($this->user, CarbonImmutable::now()))
-        ->and($log->targets_manual)->toBeFalse()
-        ->and($log->planned_meals)->toContain('pollo');
+        ->and($log->targets_manual)->toBeFalse();
 });
 
 it('rispetta l\'obiettivo che gli dai, senza ricalcolarlo', function () {

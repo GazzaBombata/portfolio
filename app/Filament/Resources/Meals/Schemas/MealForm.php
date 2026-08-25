@@ -18,6 +18,14 @@ class MealForm
         return $schema->components([
             Section::make()
                 ->schema([
+                    Select::make('kind')
+                        ->label('Che cos\'è')
+                        ->options(['eaten' => 'Un pasto che ho mangiato', 'planned' => 'Un pasto previsto dal piano'])
+                        ->default('eaten')
+                        ->native(false)
+                        ->required()
+                        ->helperText('Solo i pasti mangiati entrano nel conto delle calorie assunte.'),
+
                     DatePicker::make('eaten_on')->label('Giorno')->native(false)
                         ->displayFormat('d/m/Y')->default(now())->required(),
 

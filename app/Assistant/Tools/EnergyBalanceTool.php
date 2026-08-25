@@ -34,6 +34,65 @@ class EnergyBalanceTool implements Tool
         ];
     }
 
+    /**
+     * Previsto contro consumato, voce per voce.
+     *
+     * È il confronto per cui il piano esiste: un totale che torna può nascondere
+     * una colazione saltata e una cena doppia, e sono due giornate diverse.
+     *
+     * @return array<int, string>
+     */
+    private static function confrontoColPiano(CarbonImmutable $giorno): array
+    {
+        $previsti = Meal::query()->planned()->whereDate('eaten_on', $giorno)->get()->keyBy('moment');
+        $mangiati = Meal::query()->eaten()->whereDate('eaten_on', $giorno)->get()->groupBy('moment');
+
+        if ($previsti->isEmpty()) {
+            return [];
+        }
+
+        $nomi = ['breakfast' => 'Colazione', 'lunch' => 'Pranzo', 'dinner' => 'Cena', 'snack' => 'Spuntino'];
+        $righe = ['Confronto col piano:'];
+
+        foreach ($nomi as $chiave => $nome) {
+            $piano = $previsti->get($chiave);
+            $vero = $mangiati->get($chiave);
+
+            if ($piano === null && ($vero === null || $vero->isEmpty())) {
+                continue;
+            }
+
+            if ($piano === null) {
+                $righe[] = "  - {$nome}: NON era in programma, mangiato «".$vero->pluck('description')->implode(' + ').'»';
+
+                continue;
+            }
+
+            if ($vero === null || $vero->isEmpty()) {
+                // Un pasto previsto e non registrato: o è saltato, o è stato
+                // dimenticato. Sono due cose diverse e solo una persona lo sa.
+                $righe[] = "  - {$nome}: previsto «{$piano->description}», NIENTE registrato";
+
+                continue;
+            }
+
+            $righe[] = sprintf('  - %s: previsto «%s»%s → mangiato «%s»%s',
+                $nome,
+                $piano->description,
+                $piano->calories ? " ({$piano->calories} kcal)" : '',
+                $vero->pluck('description')->implode(' + '),
+                ($k = $vero->sum('calories')) ? " ({$k} kcal)" : '');
+        }
+
+        $totalePiano = Energy::planned($giorno);
+
+        if ($totalePiano > 0) {
+            $righe[] = "  Totale previsto: {$totalePiano} kcal";
+        }
+
+        return $righe;
+    }
+
     public function run(array $input): ToolResult
     {
         $giorno = CarbonImmutable::parse($input['giorno']);
@@ -60,7 +119,7 @@ class EnergyBalanceTool implements Tool
         }
 
         $righe[] = $assunte > 0
-            ? "- Mangiate: {$assunte} kcal, da ".Meal::query()->whereDate('eaten_on', $giorno)->count().' pasti registrati'
+            ? "- Mangiate: {$assunte} kcal, da ".Meal::query()->eaten()->whereDate('eaten_on', $giorno)->count().' pasti registrati'
             : '- Mangiate: nessuna caloria registrata (i pasti potrebbero esserci senza i valori nutrizionali)';
 
         $allenamenti = Workout::query()->whereDate('performed_on', $giorno)->get();
@@ -77,9 +136,7 @@ class EnergyBalanceTool implements Tool
                 : '- Bilancio: **'.$delta.' kcal** rispetto a '.($obiettivo !== null ? "l'obiettivo" : 'quanto stimato serva');
         }
 
-        if (filled($log?->planned_meals)) {
-            $righe[] = '- Il piano prevedeva: '.$log->planned_meals;
-        }
+        $righe = array_merge($righe, static::confrontoColPiano($giorno));
 
         $righe[] = 'Nota: sono stime. Il metabolismo basale viene da una formula di popolazione e le calorie di un allenamento dipendono da come lo si è fatto; servono a vedere una tendenza, non a decidere una singola cena.';
 

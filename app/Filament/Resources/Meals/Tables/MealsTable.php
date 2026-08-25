@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class MealsTable
@@ -17,6 +18,11 @@ class MealsTable
             // Il più recente in cima: è quello che si guarda.
             ->defaultSort('eaten_on', 'desc')
             ->columns([
+                TextColumn::make('kind')
+                    ->label('')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => $state === 'planned' ? 'previsto' : 'mangiato')
+                    ->color(fn (string $state): string => $state === 'planned' ? 'gray' : 'success'),
                 TextColumn::make('user.name')
                     ->searchable(),
                 TextColumn::make('eaten_on')
@@ -53,6 +59,12 @@ class MealsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('kind')
+                    ->label('Tipo')
+                    ->options(['eaten' => 'Mangiati', 'planned' => 'Previsti dal piano'])
+                    // Di norma si guarda cosa si è mangiato: il piano si
+                    // chiede, non si subisce mescolato al resto.
+                    ->default('eaten'),
                 //
             ])
             ->recordActions([

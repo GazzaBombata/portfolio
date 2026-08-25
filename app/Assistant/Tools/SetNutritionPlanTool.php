@@ -19,7 +19,7 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
 
     public function description(): string
     {
-        return "Registra cosa era previsto mangiare in un giorno e l'obiettivo calorico. Se l'obiettivo non viene indicato, lo calcola dal fabbisogno stimato.";
+        return "Imposta l'obiettivo calorico di un giorno. Se non lo indichi, lo calcola dal fabbisogno stimato. Per registrare cosa era previsto mangiare pasto per pasto usa pianifica_pasto.";
     }
 
     public function schema(): array
@@ -28,7 +28,6 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
             'type' => 'object',
             'properties' => [
                 'giorno' => ['type' => 'string', 'description' => 'AAAA-MM-GG'],
-                'previsto' => ['type' => ['string', 'null'], 'description' => 'Cosa prevedeva il piano, a parole'],
                 'obiettivo_calorie' => ['type' => ['integer', 'null']],
                 'obiettivo_proteine_g' => ['type' => ['integer', 'null']],
             ],
@@ -58,7 +57,6 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
             array_filter([
                 'target_calories' => $obiettivo,
                 'target_protein_g' => $input['obiettivo_proteine_g'] ?? null,
-                'planned_meals' => $input['previsto'] ?? null,
                 'targets_manual' => $aMano,
                 'activity_calories' => Energy::activityBurn(Auth::user(), $giorno),
             ], fn ($v): bool => $v !== null),
@@ -66,8 +64,7 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
 
         return ToolResult::ok(
             "Piano del {$giorno->format('d/m/Y')}: obiettivo {$log->target_calories} kcal"
-            .($aMano ? ' (come mi hai detto tu)' : ' (calcolato dal fabbisogno)')
-            .(filled($log->planned_meals) ? '. Previsto: '.$log->planned_meals : '.'),
+            .($aMano ? ' (come mi hai detto tu).' : ' (calcolato dal fabbisogno).'),
             $giorno->format('d/m').' · obiettivo '.$log->target_calories.' kcal',
         );
     }

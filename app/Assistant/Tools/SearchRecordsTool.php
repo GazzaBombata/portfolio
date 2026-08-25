@@ -55,7 +55,8 @@ class SearchRecordsTool implements Tool
         $righe = [];
 
         foreach ($pasti as $m) {
-            $righe[] = sprintf('PASTO #%d | %s | %s | %s%s',
+            $righe[] = sprintf('%s #%d | %s | %s | %s%s',
+                $m->kind === 'planned' ? 'PASTO PREVISTO' : 'PASTO',
                 $m->id, $m->eaten_on->format('d/m/Y'), $nomi[$m->moment] ?? $m->moment,
                 Str::limit((string) $m->description, 50),
                 $m->calories ? " | {$m->calories} kcal".($m->nutrition_estimated ? ' (stimate)' : '') : ' | calorie non indicate');

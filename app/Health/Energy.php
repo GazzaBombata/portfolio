@@ -115,7 +115,13 @@ class Energy
     /** Le calorie mangiate quel giorno, per quanto sono state registrate. */
     public static function intake(CarbonImmutable $day): int
     {
-        return (int) Meal::query()->whereDate('eaten_on', $day)->sum('calories');
+        return (int) Meal::query()->eaten()->whereDate('eaten_on', $day)->sum('calories');
+    }
+
+    /** Le calorie che il piano prevedeva per quel giorno. */
+    public static function planned(CarbonImmutable $day): int
+    {
+        return (int) Meal::query()->planned()->whereDate('eaten_on', $day)->sum('calories');
     }
 
     private static function metFor(string $activity): float

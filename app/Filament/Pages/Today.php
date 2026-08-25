@@ -156,6 +156,7 @@ class Today extends Page
 
         if (filled($d['meal'] ?? null)) {
             Meal::create([
+                'kind' => 'eaten',
                 'eaten_on' => now()->toDateString(),
                 'moment' => $d['moment'] ?? 'lunch',
                 'description' => $d['meal'],

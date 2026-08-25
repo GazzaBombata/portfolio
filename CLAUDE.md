@@ -65,6 +65,12 @@ strani.
   numero**: se manca l'altezza, il sesso, la data di nascita o il peso,
   restituisce null e chi lo usa lo dice. Un fabbisogno calcolato su un dato
   inventato ha l'aria di un numero vero, ed è il modo peggiore di sbagliare.
+- **Previsto e consumato stanno nella stessa tabella**, distinti da
+  `meals.kind`. Così si confrontano voce per voce — pranzo previsto contro
+  pranzo mangiato — invece di mettere una stringa accanto a delle righe. Il
+  prezzo è che **ogni conto calorico deve filtrare `eaten()`**: contare anche
+  il piano fa risultare rispettata una giornata in cui non si è mangiato niente
+  di quello, e il numero resta plausibile, quindi nessuno se ne accorge.
 - **Il ricalcolo è automatico, non si chiede.** Un observer su `Workout`
   rimette in pari il fabbisogno del giorno a ogni creazione, modifica o
   cancellazione — e su due giorni quando un allenamento viene spostato di data,
