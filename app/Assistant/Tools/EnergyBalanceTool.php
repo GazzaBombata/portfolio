@@ -124,8 +124,30 @@ class EnergyBalanceTool implements Tool
 
         $allenamenti = Workout::query()->whereDate('performed_on', $giorno)->get();
         $righe[] = $allenamenti->isEmpty()
-            ? '- Attività: nessuna'
+            ? '- Attività: nessuna registrata'
             : "- Attività: {$bruciate} kcal da ".$allenamenti->pluck('activity')->implode(', ');
+
+        $passi = $log?->steps;
+        $daPassi = Energy::stepsBurn(Auth::user(), $giorno);
+
+        if ($passi !== null) {
+            $righe[] = $daPassi > 0
+                ? '- Passi: '.number_format($passi, 0, ',', '.')." ({$daPassi} kcal oltre quelli già compresi nella giornata normale)"
+                : '- Passi: '.number_format($passi, 0, ',', '.').' (dentro il movimento quotidiano, non aggiungono calorie)';
+        }
+
+        /*
+         * Camminata registrata e passi della stessa camminata: la stessa ora
+         * contata due volte. Va detto, non corretto di nascosto — sono dati
+         * suoi e la scelta di quale tenere è sua.
+         */
+        $doppi = Energy::overlappingWorkouts($giorno);
+
+        if ($doppi !== []) {
+            $righe[] = '- ATTENZIONE: «'.implode(', ', $doppi).'» è un\'attività a piedi, quindi i suoi passi sono '
+                .'probabilmente già dentro il conteggio qui sopra. Contarla anche come allenamento la conta due volte: '
+                .'conviene togliere l\'allenamento e lasciare i passi.';
+        }
 
         $riferimento = $obiettivo ?? $fabbisogno;
 

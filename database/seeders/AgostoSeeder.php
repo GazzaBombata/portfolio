@@ -43,8 +43,12 @@ class AgostoSeeder extends Seeder
             ['2026-08-10', 94.4, 8.5, 8, 7100, 'Cyclette', 45, 2.50, 7, null],
             ['2026-08-11', 94.2, 8.5, 8, 8600, 'Cyclette', 45, 2.50, 8, null],
             ['2026-08-12', 93.9, 8.0, 8, 4700, null, null, 3.00, 8, null],
-            ['2026-08-13', 93.9, 8.0, 3, 11300, 'Camminata', 120, 3.50, 3, 'Sgarro alimentare.'],
-            ['2026-08-14', 95.7, 8.5, 8, 21300, 'Camminata', 180, 2.50, 3, 'Sgarro alimentare.'],
+            // Le camminate NON vengono registrate come allenamento: i passi
+            // di quei giorni sono la camminata, e contarle entrambe conterebbe
+            // due volte la stessa ora. La cyclette invece sì — non produce un
+            // passo, quindi i passi non la vedono.
+            ['2026-08-13', 93.9, 8.0, 3, 11300, null, null, 3.50, 3, 'Sgarro alimentare. Camminata di circa 2 h, contata nei passi.'],
+            ['2026-08-14', 95.7, 8.5, 8, 21300, null, null, 2.50, 3, 'Sgarro alimentare. Camminata di circa 3 h, contata nei passi.'],
             ['2026-08-15', 95.7, 8.0, 8, 5700, 'Cyclette', 45, 3.00, 8, null],
             // Il 16 è stato registrato solo il peso: il resto resta vuoto
             // invece di essere riempito con una media, che sarebbe un dato

@@ -71,6 +71,17 @@ strani.
   prezzo è che **ogni conto calorico deve filtrare `eaten()`**: contare anche
   il piano fa risultare rispettata una giornata in cui non si è mangiato niente
   di quello, e il numero resta plausibile, quindi nessuno se ne accorge.
+- **I passi contano nel fabbisogno**, ma solo quelli oltre i 5.000 che il
+  fattore di attività già comprende. Le attività a piedi (camminata, corsa)
+  **non vanno registrate come allenamento**: i passi le contengono già, e
+  registrarle entrambe conta due volte la stessa ora — il bilancio lo segnala
+  quando succede, invece di correggerlo di nascosto. La cyclette invece va
+  registrata: di passi non ne produce.
+- **Gli allenamenti si contano al netto del basale** (`MET − 1`). Un MET è il
+  consumo da fermi, già dentro le 24 ore: il MET pieno lo conterebbe una
+  seconda volta per la durata dell'allenamento. È anche ciò che rende
+  confrontabili passi e allenamenti, che altrimenti userebbero due metri
+  diversi.
 - **Il ricalcolo è automatico, non si chiede.** Un observer su `Workout`
   rimette in pari il fabbisogno del giorno a ogni creazione, modifica o
   cancellazione — e su due giorni quando un allenamento viene spostato di data,

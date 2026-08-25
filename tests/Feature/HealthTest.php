@@ -115,7 +115,9 @@ it('rilanciare il seeder dei giorni corregge invece di duplicare', function () {
     $seeder->run();
 
     expect(BodyMetric::count())->toBe(7)
-        ->and(Workout::count())->toBe(5)
+        // Tre: solo le cyclette. Le camminate stanno nei passi, e registrarle
+        // anche come allenamento conterebbe due volte la stessa ora.
+        ->and(Workout::count())->toBe(3)
         ->and(DailyLog::count())->toBe(6);
 });
 

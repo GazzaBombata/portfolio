@@ -35,7 +35,9 @@ it('ricalcola il giorno da solo quando nasce un allenamento', function () {
     Workout::create(['performed_on' => now(), 'activity' => 'Corsa', 'minutes' => 60]);
 
     $log = DailyLog::sole();
-    expect($log->activity_calories)->toBe(823)   // 9.8 MET × 84 kg × 1 h
+    // (9,8 − 1) MET × 84 kg × 1 h: il MET pieno conterebbe una seconda volta
+    // il basale, che nelle 24 ore c'è già.
+    expect($log->activity_calories)->toBe(739)
         ->and($log->target_calories)->toBe(Energy::dailyNeed($this->user, CarbonImmutable::now()));
 });
 

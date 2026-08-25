@@ -3,6 +3,7 @@
 namespace App\Health;
 
 use App\Models\BodyMetric;
+use App\Models\DailyLog;
 use App\Models\Meal;
 use App\Models\User;
 use App\Models\Workout;
@@ -42,6 +43,31 @@ class Energy
     private const MET_PREDEFINITO = 5.0;
 
     /**
+     * I passi già compresi nel fattore di attività del profilo.
+     *
+     * Un fattore «sedentario» non vuol dire immobile: comprende alzarsi,
+     * cucinare, arrivare alla macchina. Contare tutti i passi dal primo
+     * sarebbe contare due volte quelli che il fattore già include, quindi si
+     * conta solo quello che c'è oltre.
+     */
+    private const PASSI_GIA_INCLUSI = 5000;
+
+    /** Passi in un chilometro, per una persona di statura media. */
+    private const PASSI_PER_KM = 1300;
+
+    /** Costo del camminare: circa mezza caloria per chilo per chilometro. */
+    private const KCAL_PER_KG_KM = 0.5;
+
+    /**
+     * Attività che i passi contano già.
+     *
+     * Registrare una camminata E i passi di quella camminata è la stessa ora
+     * contata due volte. Sono qui per poterlo dire a chi guarda, non per
+     * correggerlo di nascosto: il dato è suo e la scelta è sua.
+     */
+    private const A_PIEDI = ['camminata', 'passeggiata', 'corsa', 'running', 'jogging', 'trekking'];
+
+    /**
      * Metabolismo basale secondo Mifflin-St Jeor, in kcal al giorno.
      *
      * È la formula più usata perché sbaglia meno delle altre su persone
@@ -79,7 +105,11 @@ class Energy
             return null;
         }
 
-        return (int) round($basale * (float) $user->activity_factor + static::activityBurn($user, $day));
+        return (int) round(
+            $basale * (float) $user->activity_factor
+            + static::activityBurn($user, $day)
+            + static::stepsBurn($user, $day),
+        );
     }
 
     /** Le calorie bruciate con gli allenamenti registrati quel giorno. */
@@ -106,10 +136,84 @@ class Energy
                 continue;
             }
 
-            $totale += static::metFor((string) $workout->activity) * $peso * ($workout->minutes / 60);
+            /*
+             * MET meno uno: il costo NETTO, sopra il metabolismo basale.
+             *
+             * Un MET è il consumo da fermi, e quel consumo è già dentro le 24
+             * ore del basale. Usare il MET pieno conta il basale una seconda
+             * volta per la durata dell'allenamento — un errore piccolo ma
+             * sistematico, e nella stessa direzione: gonfia sempre.
+             *
+             * È anche ciò che rende confrontabili i due metodi: le calorie dei
+             * passi sono già un costo netto, quindi senza questa correzione
+             * un'ora di cyclette e un'ora di camminata sarebbero misurate con
+             * due metri diversi.
+             */
+            $totale += max(0, static::metFor((string) $workout->activity) - 1) * $peso * ($workout->minutes / 60);
         }
 
         return (int) round($totale);
+    }
+
+    /**
+     * Le calorie dei passi oltre quelli che il fattore di attività già copre.
+     *
+     * Il conto è grossolano di proposito: chilometri stimati dal numero di
+     * passi, e mezza caloria per chilo per chilometro. Un passo non costa
+     * sempre uguale — in salita, di corsa, con lo zaino — ma questa stima
+     * sbaglia meno del non contarli affatto, che è quello che si faceva prima.
+     */
+    public static function stepsBurn(User $user, CarbonImmutable $day): int
+    {
+        $passi = DailyLog::query()->whereDate('logged_on', $day)->value('steps');
+
+        if ($passi === null || $passi <= self::PASSI_GIA_INCLUSI) {
+            return 0;
+        }
+
+        $peso = static::weightOn($user, $day) ?? static::lastWeight($user);
+
+        if ($peso === null) {
+            return 0;
+        }
+
+        $km = ($passi - self::PASSI_GIA_INCLUSI) / self::PASSI_PER_KM;
+
+        return (int) round($km * self::KCAL_PER_KG_KM * $peso);
+    }
+
+    /**
+     * Gli allenamenti di quel giorno che i passi hanno già contato.
+     *
+     * Serve a dirlo, non a correggerlo: sono dati di una persona e la scelta
+     * di quale tenere è sua.
+     *
+     * @return array<int, string>
+     */
+    public static function overlappingWorkouts(CarbonImmutable $day): array
+    {
+        $passi = DailyLog::query()->whereDate('logged_on', $day)->value('steps');
+
+        if ($passi === null || $passi <= self::PASSI_GIA_INCLUSI) {
+            return [];
+        }
+
+        return Workout::query()
+            ->whereDate('performed_on', $day)
+            ->get()
+            ->filter(function (Workout $w): bool {
+                $nome = mb_strtolower((string) $w->activity);
+
+                foreach (self::A_PIEDI as $a) {
+                    if (str_contains($nome, $a)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })
+            ->pluck('activity')
+            ->all();
     }
 
     /** Le calorie mangiate quel giorno, per quanto sono state registrate. */

@@ -55,10 +55,11 @@ it('non calcola niente senza una misurazione del peso', function () {
 
 it('somma le calorie degli allenamenti del giorno', function () {
     BodyMetric::create(['measured_on' => now(), 'weight_kg' => 80.0]);
-    // Corsa: 9.8 MET × 80 kg × 1 ora ≈ 784 kcal
+    // Corsa: (9,8 − 1) MET × 80 kg × 1 ora. Il MET pieno conterebbe di nuovo
+    // il metabolismo basale di quell'ora, già dentro le 24.
     Workout::create(['performed_on' => now(), 'activity' => 'Corsa', 'minutes' => 60]);
 
-    expect(Energy::activityBurn($this->user, CarbonImmutable::now()))->toBe(784);
+    expect(Energy::activityBurn($this->user, CarbonImmutable::now()))->toBe(704);
 });
 
 /*
@@ -81,7 +82,7 @@ it('somma lo sport al fabbisogno invece di nasconderlo in un fattore', function 
 
     // Una giornata di corsa non può valere quanto una da fermo.
     expect($attivo)->toBeGreaterThan($fermo)
-        ->and($attivo - $fermo)->toBe(784);
+        ->and($attivo - $fermo)->toBe(704);
 });
 
 /*
