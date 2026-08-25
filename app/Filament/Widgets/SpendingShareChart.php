@@ -2,10 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\IsDrillable;
 use App\Finance\Reporting;
 use App\Models\Category;
 use Filament\Widgets\ChartWidget;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Support\Collection;
 
 /**
  * Quanto pesa ogni categoria sul totale speso.
@@ -24,8 +26,11 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 class SpendingShareChart extends ChartWidget
 {
     use InteractsWithPageFilters;
+    use IsDrillable;
 
     protected static ?int $sort = 3;
+
+    protected string $view = 'filament.widgets.drillable-chart';
 
     protected ?string $heading = 'Come si distribuiscono le uscite';
 
@@ -48,14 +53,49 @@ class SpendingShareChart extends ChartWidget
         return 'doughnut';
     }
 
-    protected function getData(): array
+    /**
+     * Le categorie dietro ogni fetta.
+     *
+     * Ricalcolate con la stessa query e lo stesso ordine di getData(): il
+     * browser sa solo di aver cliccato la terza fetta, e la corrispondenza fra
+     * quel numero e una categoria esiste solo se le due liste sono costruite
+     * allo stesso modo.
+     *
+     * @return array<int, array<int, int>>
+     */
+    public function drillTargets(): array
     {
-        $righe = Reporting::expenses($this->pageFilters)
+        $righe = $this->righe();
+
+        $target = $righe->take(self::FETTE)
+            ->map(fn ($r): array => [(int) $r->category_id])
+            ->values()
+            ->all();
+
+        $resto = $righe->slice(self::FETTE);
+
+        if ($resto->isNotEmpty()) {
+            // La fetta del resto porta dentro tutte le categorie che raccoglie.
+            $target[] = $resto->pluck('category_id')->map(fn ($id): int => (int) $id)->all();
+        }
+
+        return $target;
+    }
+
+    /** @return Collection<int, object> */
+    private function righe(): Collection
+    {
+        return Reporting::expenses($this->pageFilters)
             ->whereNotNull('category_id')
             ->selectRaw('category_id, SUM(amount) as totale')
             ->groupBy('category_id')
             ->orderByRaw('SUM(amount)')
             ->get();
+    }
+
+    protected function getData(): array
+    {
+        $righe = $this->righe();
 
         if ($righe->isEmpty()) {
             return ['datasets' => [['data' => []]], 'labels' => []];

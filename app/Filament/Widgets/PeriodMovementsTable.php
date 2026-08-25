@@ -6,6 +6,7 @@ use App\Finance\Period;
 use App\Finance\Reporting;
 use App\Models\Category;
 use App\Models\Transaction;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
@@ -19,6 +20,7 @@ use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
+use Livewire\Attributes\On;
 
 /**
  * I movimenti dietro ai numeri qui sopra.
@@ -35,17 +37,68 @@ class PeriodMovementsTable extends TableWidget
 
     protected static ?int $sort = 4;
 
+    /**
+     * Le categorie su cui il grafico ci ha mandato.
+     *
+     * Vive qui e non fra i filtri della pagina perché è una domanda di un
+     * momento — «e questi da cosa sono fatti?» — non un'impostazione: si apre
+     * cliccando e si chiude con un pulsante, senza toccare quello che gli
+     * altri riquadri stanno mostrando.
+     *
+     * @var array<int, int>
+     */
+    public array $drilledCategories = [];
+
     protected int|string|array $columnSpan = 'full';
+
+    protected string $view = 'filament.widgets.period-movements';
+
+    /**
+     * @param  array<int, int>  $categories
+     */
+    #[On('drill-into-categories')]
+    public function drillIntoCategories(array $categories): void
+    {
+        $this->drilledCategories = $categories;
+        $this->resetTable();
+
+        // La tabella sta in fondo alla pagina: senza questo, il clic filtra
+        // qualcosa che l'utente non ha sotto gli occhi e sembra non sia
+        // successo niente.
+        $this->dispatch('scroll-to-movements');
+    }
+
+    public function clearDrill(): void
+    {
+        $this->drilledCategories = [];
+        $this->resetTable();
+    }
 
     public function table(Table $table): Table
     {
         $periodo = Period::fromFilters($this->pageFilters);
+        $nomi = $this->drilledCategories === []
+            ? null
+            : Category::query()->whereIn('id', $this->drilledCategories)->orderBy('name')->pluck('name');
 
         return $table
-            ->heading('Movimenti')
-            ->description('Quello che compone i numeri qui sopra, per '.$periodo->label.'.'
-                .Reporting::excludedLabel($this->pageFilters))
-            ->query(fn (): Builder => Reporting::realMovements($this->pageFilters)->with(['account', 'category']))
+            ->heading($nomi === null
+                ? 'Movimenti'
+                : 'Movimenti · '.($nomi->count() > 3 ? $nomi->count().' categorie' : $nomi->implode(', ')))
+            ->description($nomi === null
+                ? 'Quello che compone i numeri qui sopra, per '.$periodo->label.'.'.Reporting::excludedLabel($this->pageFilters)
+                : 'Hai cliccato sul grafico: qui sotto ci sono solo questi movimenti.')
+            ->headerActions($nomi === null ? [] : [
+                Action::make('clearDrill')
+                    ->label('Mostra tutti')
+                    ->icon('heroicon-m-x-mark')
+                    ->color('gray')
+                    ->link()
+                    ->action(fn () => $this->clearDrill()),
+            ])
+            ->query(fn (): Builder => Reporting::realMovements($this->pageFilters)
+                ->when($this->drilledCategories !== [], fn (Builder $q) => $q->whereIn('category_id', $this->drilledCategories))
+                ->with(['account', 'category']))
             ->defaultSort('booked_on', 'desc')
             ->defaultPaginationPageOption(10)
             ->columns([
