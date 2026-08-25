@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToUser;
+use App\Observers\WorkoutObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(WorkoutObserver::class)]
 class Workout extends Model
 {
     use BelongsToUser, HasFactory;

@@ -65,6 +65,12 @@ strani.
   numero**: se manca l'altezza, il sesso, la data di nascita o il peso,
   restituisce null e chi lo usa lo dice. Un fabbisogno calcolato su un dato
   inventato ha l'aria di un numero vero, ed è il modo peggiore di sbagliare.
+- **Il ricalcolo è automatico, non si chiede.** Un observer su `Workout`
+  rimette in pari il fabbisogno del giorno a ogni creazione, modifica o
+  cancellazione — e su due giorni quando un allenamento viene spostato di data,
+  altrimenti quello di partenza continuerebbe a contare calorie di qualcosa che
+  non c'è più. Un bilancio aggiornato solo quando qualcuno si ricorda di
+  chiederlo è peggio di nessun bilancio: sembra aggiornato.
 - **Lo sport si somma al fabbisogno, non si nasconde in un fattore.** Un
   `activity_factor` alto darebbe lo stesso fabbisogno a una settimana ferma e a
   una di allenamenti — cioè cancellerebbe la differenza che si vuole vedere.
