@@ -29,6 +29,15 @@ class DailyLogForm
                 ->minValue(0)
                 ->maxValue(20),
 
+            TextInput::make('steps')
+                ->label('Passi')
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(100000)
+                // Non entrano nel conto calorico: il fattore di attività del
+                // profilo li copre già, e sommarli li conterebbe due volte.
+                ->helperText('Registrati per vederli nel tempo, non usati nel calcolo delle calorie.'),
+
             Select::make('nutrition_adherence')
                 ->label('Quanto hai seguito il piano')
                 ->options([

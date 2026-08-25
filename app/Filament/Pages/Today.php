@@ -57,6 +57,7 @@ class Today extends Page
             'minutes' => $notte?->minutes,
             'quality' => $notte?->quality,
             'water_litres' => $giornata?->water_litres,
+            'steps' => $giornata?->steps,
             'nutrition_adherence' => $giornata?->nutrition_adherence,
             'weight_kg' => $peso?->weight_kg,
         ]);
@@ -80,6 +81,7 @@ class Today extends Page
                 Section::make('Oggi')
                     ->schema([
                         TextInput::make('water_litres')->label('Acqua')->numeric()->suffix('litri')->step('0.25')->minValue(0),
+                        TextInput::make('steps')->label('Passi')->numeric()->minValue(0),
                         Select::make('nutrition_adherence')
                             ->label('Piano nutrizionale')
                             ->options(array_combine(range(1, 10), array_map(
@@ -92,7 +94,7 @@ class Today extends Page
                             ->native(false),
                         TextInput::make('weight_kg')->label('Peso')->numeric()->suffix('kg')->step('0.1'),
                     ])
-                    ->columns(3),
+                    ->columns(4),
 
                 Section::make('Ti sei mosso?')
                     ->schema([
@@ -127,11 +129,12 @@ class Today extends Page
             $salvato[] = 'sonno';
         }
 
-        if (filled($d['water_litres'] ?? null) || filled($d['nutrition_adherence'] ?? null)) {
+        if (filled($d['water_litres'] ?? null) || filled($d['nutrition_adherence'] ?? null) || filled($d['steps'] ?? null)) {
             DailyLog::updateOrCreate(
                 ['logged_on' => now()->toDateString()],
                 array_filter([
                     'water_litres' => $d['water_litres'] ?? null,
+                    'steps' => $d['steps'] ?? null,
                     'nutrition_adherence' => $d['nutrition_adherence'] ?? null,
                 ], fn ($v) => $v !== null),
             );
@@ -178,6 +181,7 @@ class Today extends Page
             'minutes' => $d['minutes'] ?? null,
             'quality' => $d['quality'] ?? null,
             'water_litres' => $d['water_litres'] ?? null,
+            'steps' => $d['steps'] ?? null,
             'nutrition_adherence' => $d['nutrition_adherence'] ?? null,
             'weight_kg' => $d['weight_kg'] ?? null,
         ]);

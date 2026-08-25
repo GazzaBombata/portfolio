@@ -11,7 +11,7 @@ class DailyLog extends Model
     use BelongsToUser, HasFactory;
 
     protected $fillable = [
-        'logged_on', 'water_litres', 'nutrition_adherence', 'notes',
+        'logged_on', 'water_litres', 'steps', 'nutrition_adherence', 'notes',
         'target_calories', 'target_protein_g', 'planned_meals', 'activity_calories', 'targets_manual',
     ];
 

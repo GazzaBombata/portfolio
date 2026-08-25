@@ -10,6 +10,7 @@ use App\Models\Meal;
 use App\Models\SleepLog;
 use App\Models\User;
 use App\Models\Workout;
+use Database\Seeders\AgostoSeeder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -101,4 +102,46 @@ it('registra acqua e aderenza al piano', function () {
 
     expect((string) $stat->getValue())->toBe('2,5 l')
         ->and((string) $stat->getDescription())->toContain('piano 8.0/10');
+});
+
+/*
+ * Il seeder dei giorni di agosto va rilanciato senza paura: se duplicasse,
+ * ogni esecuzione aggiungerebbe una seconda cyclette allo stesso giorno e il
+ * consumo calorico di quella giornata raddoppierebbe.
+ */
+it('rilanciare il seeder dei giorni corregge invece di duplicare', function () {
+    $seeder = new AgostoSeeder;
+    $seeder->run();
+    $seeder->run();
+
+    expect(BodyMetric::count())->toBe(7)
+        ->and(Workout::count())->toBe(5)
+        ->and(DailyLog::count())->toBe(6);
+});
+
+it('registra la notte sotto la sera in cui è cominciata', function () {
+    (new AgostoSeeder)->run();
+
+    // Le 8,5 h riportate sul 10 agosto sono la notte del 9.
+    expect(SleepLog::firstWhere('night_of', '2026-08-09')?->minutes)->toBe(510);
+});
+
+/*
+ * «sgarro» non diventa un valore nullo: una giornata storta che sparisce dalle
+ * medie le rende più belle di com'è andata.
+ */
+it('tiene le giornate storte dentro le statistiche', function () {
+    (new AgostoSeeder)->run();
+
+    $sgarro = DailyLog::firstWhere('logged_on', '2026-08-13');
+
+    expect($sgarro->nutrition_adherence)->toBe(3)
+        ->and($sgarro->notes)->toContain('Sgarro');
+});
+
+it('non inventa i dati mancanti del giorno con il solo peso', function () {
+    (new AgostoSeeder)->run();
+
+    expect(BodyMetric::firstWhere('measured_on', '2026-08-16'))->not->toBeNull()
+        ->and(DailyLog::firstWhere('logged_on', '2026-08-16'))->toBeNull();
 });
