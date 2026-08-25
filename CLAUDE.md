@@ -58,6 +58,16 @@ strani.
   (`category_locked`). È ciò che rende sensato correggerne una.
 - **Il segno decide la categoria ammissibile**: un'entrata non può finire in una
   voce di spesa, e viceversa.
+- **Le calorie sono stime, e vanno presentate come tali.** Il metabolismo
+  basale viene da una formula di popolazione (Mifflin-St Jeor) che sul singolo
+  sbaglia facilmente del 10%, e il consumo di un allenamento dipende da come è
+  stato fatto, non da come si chiama. `App\Health\Energy` **non inventa mai un
+  numero**: se manca l'altezza, il sesso, la data di nascita o il peso,
+  restituisce null e chi lo usa lo dice. Un fabbisogno calcolato su un dato
+  inventato ha l'aria di un numero vero, ed è il modo peggiore di sbagliare.
+- **Lo sport si somma al fabbisogno, non si nasconde in un fattore.** Un
+  `activity_factor` alto darebbe lo stesso fabbisogno a una settimana ferma e a
+  una di allenamenti — cioè cancellerebbe la differenza che si vuole vedere.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.

@@ -15,7 +15,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use SensitiveParameter;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'birth_date', 'height_cm', 'sex', 'activity_factor', 'health_notes'])]
 #[Hidden(['password', 'remember_token', 'app_authentication_secret', 'app_authentication_recovery_codes'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
@@ -32,6 +32,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birth_date' => 'date',
+            'activity_factor' => 'decimal:2',
             // Encrypted rather than plain: the TOTP seed mints valid codes for
             // as long as it exists, and the recovery codes skip the second
             // factor altogether.
