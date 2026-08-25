@@ -49,11 +49,42 @@ class StatementImporter
 
         [$imported, $duplicate] = $this->store($parsed, $profile, $record);
 
+        /*
+         * Un blocco intero ripetuto NON è come due caffè uguali.
+         *
+         * Due righe identiche nello stesso giorno sono normali e vanno tenute:
+         * è il motivo per cui esiste `occurrence`. Ma quando metà del file è
+         * fatta di ripetizioni esatte, non sono transazioni doppie — è un
+         * documento scaricato due volte e concatenato, e ci è successo
+         * davvero: un file di 107 righe che ne conteneva 52 ripetute, per
+         * 1.415 € contati due volte.
+         *
+         * Non lo si corregge in automatico, perché la differenza fra i due
+         * casi non è nei dati. Lo si dice, e forte.
+         */
+        $ripetute = count($parsed) - count(array_unique(array_map(
+            fn (array $r): string => $r['booked_on'].'|'.$r['amount'].'|'.$r['raw_description'],
+            $parsed,
+        )));
+
+        $avviso = null;
+
+        if ($parsed !== [] && $ripetute > 0 && ($ripetute / count($parsed)) >= 0.2) {
+            $avviso = sprintf(
+                'Attenzione: %d righe su %d di questo file sono ripetizioni esatte di altre righe. '
+                .'Di solito vuol dire che il file contiene lo stesso estratto due volte — '
+                .'controlla prima di fidarti dei totali.',
+                $ripetute,
+                count($parsed),
+            );
+        }
+
         $dates = array_column($parsed, 'booked_on');
         sort($dates);
 
         $record->update([
             'status' => 'completed',
+            'error' => $avviso,
             'rows_total' => count($rows),
             'rows_imported' => $imported,
             'rows_duplicate' => $duplicate,

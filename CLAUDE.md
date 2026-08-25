@@ -51,6 +51,12 @@ strani.
   contate una per una; il pagamento dell'estratto le conterebbe di nuovo. Sugli
   estratti veri erano 14.500 € di doppio conteggio. Le query passano tutte da
   `App\Finance\Reporting`, che è l'unico posto dove quella condizione è scritta.
+- **Due righe identiche nello stesso giorno sono due transazioni**, non un
+  errore: `occurrence` esiste per quello. Ma un intero blocco ripetuto è
+  un'altra cosa — un estratto scaricato due volte e concatenato — e l'import
+  lo **segnala** invece di correggerlo, perché la differenza fra i due casi non
+  è nei dati. È successo su un file di 107 righe che ne conteneva 52 ripetute:
+  1.415 € contati due volte, scoperti dall'assistente giorni dopo.
 - **Il modello risponde "non lo so".** Un bonifico o una domiciliazione possono
   essere qualunque cosa: classificarli a indovinare produce un report ordinato e
   sbagliato, che nessuno ricontrolla. Restano scoperti, e si vedono.

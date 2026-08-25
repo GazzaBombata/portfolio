@@ -141,13 +141,29 @@ it('legge le date americane come tali e non come europee', function () {
 
 it('scarta la riga invece del file quando una data non è leggibile', function () {
     $path = $this->dir.'/misto.csv';
-    file_put_contents($path, "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-12,50;BUONA\nSaldo finale;;1.234,00\n");
+    // Una riga corrotta vera: ha tre campi come le altre, ma la data è
+    // spezzata — capita ai bordi dei file concatenati male.
+    file_put_contents($path, "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-12,50;BUONA\n26;-7,00;TRONCATA\n");
 
     $record = runImport($path, csvProfile($this->account));
 
     expect($record->rows_imported)->toBe(1)
         ->and($record->rows_failed)->toBe(1)
         ->and($record->status)->toBe('completed');
+});
+
+/*
+ * Un piede di saldo non è una riga rotta: prima finiva fra le «non leggibili»,
+ * e quel conteggio nascondeva che il file conteneva più di un documento.
+ */
+it('non conta i piedi di saldo fra le righe illeggibili', function () {
+    $path = $this->dir.'/saldo.csv';
+    file_put_contents($path, "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-12,50;BUONA\nSaldo finale;;\n");
+
+    $record = runImport($path, csvProfile($this->account));
+
+    expect($record->rows_imported)->toBe(1)
+        ->and($record->rows_failed)->toBe(0);
 });
 
 it('somma addebiti e accrediti da due colonne separate con il segno giusto', function () {
@@ -161,4 +177,71 @@ it('somma addebiti e accrediti da due colonne separate con il segno giusto', fun
 
     expect((float) Transaction::where('description', 'POS')->sole()->amount)->toBe(-61.25)
         ->and((float) Transaction::where('description', 'BONIFICO')->sole()->amount)->toBe(2000.0);
+});
+
+/*
+ * Gli estratti scaricati più volte arrivano concatenati: un blocco, il suo
+ * totale, e poi lo stesso blocco di nuovo con la sua intestazione. È successo
+ * davvero, su un file di 107 righe che ne conteneva 52 ripetute — 1.415 €
+ * contati due volte, e nessuno se ne è accorto per giorni.
+ */
+it('salta i piedi di totale in mezzo al file', function () {
+    $path = $this->dir.'/totali.csv';
+    file_put_contents($path, "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-10,00;BAR\n;;Totale\n02/08/2026;-20,00;SUPERMERCATO\n");
+
+    $record = runImport($path, csvProfile($this->account));
+
+    expect($record->rows_imported)->toBe(2)
+        // Prima veniva contata come «riga non leggibile», nascondendo che il
+        // file conteneva due documenti.
+        ->and($record->rows_failed)->toBe(0);
+});
+
+it('salta una seconda intestazione in mezzo al file', function () {
+    $path = $this->dir.'/doppio.csv';
+    file_put_contents($path,
+        "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-10,00;BAR\nDATA;IMPORTO;DESCRIZIONE\n02/08/2026;-20,00;SUPERMERCATO\n");
+
+    $record = runImport($path, csvProfile($this->account));
+
+    expect($record->rows_imported)->toBe(2)
+        ->and($record->rows_failed)->toBe(0);
+});
+
+/*
+ * Non lo corregge da solo: due righe identiche nello stesso giorno sono
+ * normali e vanno tenute. Ma quando è metà del file, non sono transazioni
+ * doppie — è un documento scaricato due volte, e va detto forte.
+ */
+it('avvisa quando metà del file è una ripetizione', function () {
+    $righe = "DATA;IMPORTO;DESCRIZIONE\n";
+    foreach (range(1, 5) as $g) {
+        $righe .= sprintf("0%d/08/2026;-1%d,00;NEGOZIO %d\n", $g, $g, $g);
+    }
+    // Lo stesso blocco, di nuovo.
+    foreach (range(1, 5) as $g) {
+        $righe .= sprintf("0%d/08/2026;-1%d,00;NEGOZIO %d\n", $g, $g, $g);
+    }
+
+    $path = $this->dir.'/ripetuto.csv';
+    file_put_contents($path, $righe);
+
+    $record = runImport($path, csvProfile($this->account));
+
+    expect($record->error)->toContain('ripetizioni esatte')
+        ->and($record->status)->toBe('completed');
+});
+
+it('non avvisa per due scontrini uguali nello stesso giorno', function () {
+    $path = $this->dir.'/caffe.csv';
+    file_put_contents($path,
+        "DATA;IMPORTO;DESCRIZIONE\n01/08/2026;-1,20;CAFFE\n01/08/2026;-1,20;CAFFE\n"
+        ."02/08/2026;-30,00;SPESA\n03/08/2026;-12,00;PRANZO\n04/08/2026;-8,00;LIBRO\n"
+        ."05/08/2026;-45,00;BENZINA\n06/08/2026;-22,00;CENA\n07/08/2026;-15,00;FARMACIA\n");
+
+    $record = runImport($path, csvProfile($this->account));
+
+    // Un caffè ripetuto su otto righe non è un documento doppio.
+    expect($record->error)->toBeNull()
+        ->and($record->rows_imported)->toBe(8);
 });

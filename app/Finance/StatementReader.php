@@ -126,6 +126,33 @@ class StatementReader
     }
 
     /**
+     * Una riga di totale: quasi tutte le colonne vuote, e una parola come
+     * «totale» o «saldo» dove dovrebbe esserci una descrizione.
+     *
+     * @param  array<string, string|float|int>  $row
+     */
+    private static function isTotalsRow(array $row): bool
+    {
+        $valori = array_values(array_filter(
+            array_map(fn ($v) => trim((string) $v), $row),
+            fn (string $v): bool => $v !== '',
+        ));
+
+        // Una transazione ha almeno una data, una descrizione e un importo.
+        if (count($valori) > 2) {
+            return false;
+        }
+
+        foreach ($valori as $v) {
+            if (preg_match('/^(totale|saldo|total)\b/iu', $v) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Take the heading row named by the profile and key every row below it.
      *
      * @param  array<int, array<int, mixed>>  $raw
@@ -152,6 +179,7 @@ class StatementReader
         }
 
         $rows = [];
+        $primaRiga = implode('|', $headings);
 
         foreach (array_slice($raw, $headerIndex + 1) as $line) {
             $row = [];
@@ -161,11 +189,28 @@ class StatementReader
                 $row[$heading] = is_int($cell) || is_float($cell) ? $cell : trim((string) $cell);
             }
 
-            // Blank separator rows and the totals footer both come through as
-            // empty; neither is a transaction.
-            if (implode('', array_map(fn ($v) => (string) $v, $row)) !== '') {
-                $rows[] = $row;
+            $testo = implode('', array_map(fn ($v) => (string) $v, $row));
+
+            // Righe vuote di separazione: non sono transazioni.
+            if ($testo === '') {
+                continue;
             }
+
+            /*
+             * Piedi e intestazioni in mezzo al file.
+             *
+             * Gli estratti scaricati più volte finiscono concatenati: un
+             * blocco, il suo totale, e poi un altro blocco con la sua
+             * intestazione. Quelle righe non sono movimenti, e lasciarle
+             * passare le fa arrivare al parser, che le scarta — ma solo dopo
+             * averle contate come «righe non leggibili», nascondendo che il
+             * file conteneva due documenti.
+             */
+            if (static::isTotalsRow($row) || implode('|', array_values($row)) === $primaRiga) {
+                continue;
+            }
+
+            $rows[] = $row;
         }
 
         return $rows;
