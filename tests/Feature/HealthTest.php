@@ -121,6 +121,20 @@ it('rilanciare il seeder dei giorni corregge invece di duplicare', function () {
         ->and(DailyLog::count())->toBe(6);
 });
 
+/*
+ * Chi ha già i dati della versione precedente ha anche le camminate registrate
+ * come allenamento: rilanciare il seeder deve toglierle, altrimenti restano
+ * sommate ai passi che le contengono già.
+ */
+it('toglie le camminate registrate prima che i passi le coprissero', function () {
+    Workout::create(['performed_on' => '2026-08-14', 'activity' => 'Camminata', 'minutes' => 180]);
+
+    (new AgostoSeeder)->run();
+
+    expect(Workout::where('activity', 'Camminata')->count())->toBe(0)
+        ->and(Workout::where('activity', 'Cyclette')->count())->toBe(3);
+});
+
 it('registra la notte sotto la sera in cui è cominciata', function () {
     (new AgostoSeeder)->run();
 

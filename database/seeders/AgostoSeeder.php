@@ -56,6 +56,20 @@ class AgostoSeeder extends Seeder
             ['2026-08-16', 95.3, null, null, null, null, null, null, null, null],
         ];
 
+        /*
+         * Le camminate registrate da una versione precedente vanno tolte.
+         *
+         * `updateOrCreate` aggiorna e non cancella: senza questa riga, chi
+         * rilancia il seeder dopo il cambiamento si ritrova le camminate
+         * ancora lì, sommate ai passi che le contengono già — cioè la stessa
+         * ora contata due volte, che è esattamente ciò che il cambiamento
+         * voleva evitare.
+         */
+        Workout::query()
+            ->whereBetween('performed_on', ['2026-08-10', '2026-08-16'])
+            ->whereIn('activity', ['Camminata', 'camminata', 'Passeggiata'])
+            ->delete();
+
         foreach ($giorni as [$data, $peso, $ore, $qualita, $passi, $attivita, $minuti, $acqua, $dieta, $nota]) {
             BodyMetric::updateOrCreate(['measured_on' => $data], ['weight_kg' => $peso]);
 
