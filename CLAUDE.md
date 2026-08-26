@@ -113,6 +113,13 @@ strani.
   `inputTokens`. `App\Ai\Budget` la registra a parte: contarla zero farebbe
   guardare al tetto mensile una spesa più bassa di quella vera, che è il modo
   esatto in cui un tetto di spesa smette di servire.
+
+  Misurato su domande vere il 26/08/2026, chat spese: 1.901 token entrano in
+  cache. Prima domanda 0,029 $, seconda entro i cinque minuti 0,016 $ — contro
+  gli 0,061 $ che costavano due domande con la chat unica. La scrittura costa
+  un pelo più dell'input normale, quindi il primo colpo è in perdita di
+  ~0,002 $ e rientra alla prima rilettura: dentro un turno agentico ce n'è
+  sempre almeno una, perché il ciclo degli strumenti fa più di una chiamata.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.
