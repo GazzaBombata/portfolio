@@ -1,5 +1,7 @@
 <?php
 
+use App\Ai\ModelCatalog;
+use App\Ai\Pricing;
 use App\Assistant\ChangesSomething;
 use App\Assistant\Runner;
 use App\Assistant\Tools\CategoriseTransactionsTool;
@@ -20,6 +22,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
@@ -273,4 +276,69 @@ it('chiude il turno dicendo che è stato fermato', function () {
 
     expect($esito['stopped'])->toBeTrue()
         ->and($esito['content'])->toContain('Fermato');
+});
+
+/*
+ * Il menu del modello.
+ *
+ * Il cancello è il prezzo, non l'elenco: un modello senza prezzo configurato
+ * non deve poter essere chiamato nemmeno passando il suo id a mano, perché una
+ * chiamata a un modello non prezzato spende soldi che nessun conteggio vede.
+ */
+it('offre solo i modelli che hanno un prezzo', function () {
+    $opzioni = array_keys(Livewire::test(FinanceAssistant::class)->get('modelOptions'));
+
+    expect($opzioni)->toContain('claude-opus-5')
+        ->and($opzioni)->toContain('claude-haiku-4-5')
+        // La variante datata è lo stesso modello dell'alias: nel menu una volta sola.
+        ->and($opzioni)->not->toContain('claude-haiku-4-5-20251001');
+
+    foreach ($opzioni as $id) {
+        expect(Pricing::isPriced($id))->toBeTrue();
+    }
+});
+
+it('parte dal modello predefinito e ricorda quello scelto', function () {
+    Queue::fake();
+
+    expect(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe(config('ai.model'));
+
+    Livewire::test(HealthAssistant::class)
+        ->set('chatModel', 'claude-haiku-4-5')
+        ->set('question', 'ieri ho corso')
+        ->call('send');
+
+    expect(AssistantMessage::where('role', 'assistant')->latest('id')->value('model'))->toBe('claude-haiku-4-5')
+        // Riaprendo la pagina il menu riparte da lì, non dal predefinito.
+        ->and(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe('claude-haiku-4-5');
+
+    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === 'claude-haiku-4-5');
+});
+
+it('ignora un modello non in elenco arrivato dal browser', function () {
+    Queue::fake();
+
+    Livewire::test(FinanceAssistant::class)
+        ->set('chatModel', 'claude-gratis-inventato')
+        ->set('question', 'quanto ho speso?')
+        ->call('send');
+
+    // Torna al predefinito invece di scrivere in tabella un id che poi
+    // fallirebbe a valle: l'errore si vedrebbe come una risposta rotta.
+    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === config('ai.model'));
+});
+
+it('riconosce la variante datata di un modello', function () {
+    expect(ModelCatalog::isKnownAs('claude-haiku-4-5-20251001', ['claude-haiku-4-5']))->toBeTrue()
+        ->and(ModelCatalog::isKnownAs('claude-haiku-4-5', ['claude-haiku-4-5-20251001']))->toBeTrue()
+        ->and(ModelCatalog::isKnownAs('claude-opus-5', ['claude-haiku-4-5']))->toBeFalse();
+});
+
+it('non chiede il catalogo ad Anthropic senza chiave', function () {
+    Http::fake();
+    config()->set('ai.key', '');
+
+    expect((new ModelCatalog)->names())->toBe([]);
+
+    Http::assertNothingSent();
 });

@@ -31,6 +31,32 @@
             border: 1px solid rgb(228 228 231); border-radius: .875rem; background: #fff; overflow: hidden; }
         .dark .ga-chat { border-color: rgb(63 63 70); background: rgb(24 24 27); }
 
+        /* Barra in alto: la scelta del modello. Sta qui e non nelle
+           impostazioni perché è una decisione che si prende guardando la
+           conversazione — «questa domanda merita Opus» — non una volta per
+           tutte in un'altra schermata. */
+        .ga-top { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+            padding: .5rem .75rem; border-bottom: 1px solid rgb(228 228 231); background: rgb(250 250 250); }
+        .dark .ga-top { border-color: rgb(63 63 70); background: rgb(31 31 34); }
+        .ga-top-label { font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; color: rgb(113 113 122); }
+        .ga-model { font-size: .8125rem; color: rgb(39 39 42); border: 1px solid rgb(212 212 216); border-radius: .5rem;
+            padding: .25rem 1.75rem .25rem .5rem; background: #fff; cursor: pointer; max-width: 100%; }
+        .dark .ga-model { background: rgb(39 39 42); border-color: rgb(63 63 70); color: rgb(228 228 231); }
+        .ga-model:focus { outline: none; border-color: rgb(79 70 229); }
+        .ga-newmodels { font-size: .72rem; color: rgb(67 56 202); background: rgb(238 242 255);
+            border: 1px solid rgb(224 231 255); border-radius: 9999px; padding: .15rem .5rem; cursor: help; white-space: nowrap; }
+        .dark .ga-newmodels { background: rgb(49 46 129); color: rgb(199 210 254); border-color: rgb(67 56 202); }
+        .ga-cost { margin-left: auto; font-size: .72rem; color: rgb(113 113 122); white-space: nowrap; }
+
+        @media (max-width: 40rem) {
+            .ga-top-label { display: none; }
+            .ga-model { flex: 1 1 10rem; min-width: 0; }
+            /* Via il promemoria: dice di aggiungere un prezzo in
+               config/ai.php e si legge solo passandoci sopra col mouse.
+               Nessuna delle due cose si fa da un telefono. */
+            .ga-newmodels { display: none; }
+        }
+
         .ga-msgs { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
 
         .ga-row { display: flex; gap: .625rem; }
@@ -67,6 +93,29 @@
     </style>
 
     <div class="ga-chat">
+        <div class="ga-top">
+            <span class="ga-top-label">Modello</span>
+            <select wire:model.live="chatModel" class="ga-model">
+                @foreach ($this->modelOptions as $valore => $etichetta)
+                    <option value="{{ $valore }}">{{ $etichetta }}</option>
+                @endforeach
+            </select>
+
+            @if (! empty($this->newModels))
+                {{-- «Non abilitati», non «nuovi»: l'elenco può contenere anche
+                     modelli più VECCHI di quello che usiamo, che nessuno ha mai
+                     voluto accendere. Chiamarli nuovi è una bugia piccola, e le
+                     bugie piccole su un avviso insegnano a saltarlo — compresa
+                     la volta in cui esce davvero qualcosa di nuovo. --}}
+                <span class="ga-newmodels"
+                      title="Disponibili sull'account ma non abilitati. Per renderne uno scegliibile serve un prezzo in App\Ai\Pricing: {{ implode(', ', array_keys($this->newModels)) }}">
+                    ✨ {{ count($this->newModels) }} non abilitati
+                </span>
+            @endif
+
+            <span class="ga-cost">{{ $this->costoDelMese }}</span>
+        </div>
+
         <div
             class="ga-msgs"
             @if ($thinking) wire:poll.1s="refreshMessages" @endif

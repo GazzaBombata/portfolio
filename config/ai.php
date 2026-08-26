@@ -9,6 +9,20 @@ return [
     'model' => env('AI_MODEL', 'claude-opus-5'),
 
     /*
+     * Le etichette del menu «Modello» nella chat, id => testo.
+     *
+     * È solo una mappa di visualizzazione: un modello è SCEGLIIBILE quando ha
+     * un prezzo in App\Ai\Pricing, che è il cancello con una persona davanti.
+     * Metterlo qui senza prezzo non produce una chiamata a buon mercato: la
+     * chiamata viene rifiutata prima di spendere un token, apposta.
+     */
+    'assistant_models' => [
+        'claude-opus-5' => 'Opus 5 — ragiona meglio',
+        'claude-sonnet-5' => 'Sonnet 5 — equilibrato',
+        'claude-haiku-4-5' => 'Haiku 4.5 — il più economico',
+    ],
+
+    /*
      * Quanti esercenti per chiamata.
      *
      * Non uno per volta: la lista delle categorie e le istruzioni verrebbero

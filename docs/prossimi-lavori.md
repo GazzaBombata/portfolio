@@ -84,6 +84,9 @@ Niente di aperto.
 - [x] Reboot del server
 - [x] Due conversazioni separate, spese e salute, con il prompt statico in
       cache (26/08/2026): gli strumenti erano il 65% del costo di ogni domanda
+- [x] Scelta del modello dal menu della chat, con il prezzo come cancello
+      (26/08/2026). Nell'occasione: il prezzo di Sonnet 5 in listino era quello
+      di Sonnet 4.6 — 3/15 invece di 2/10 — quindi il conteggio sovrastimava.
 
 - [x] Ricostruzione del progetto sullo stack corrente (21/08/2026)
 - [x] Import degli estratti conto di cinque istituti, 664 movimenti

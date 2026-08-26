@@ -120,6 +120,15 @@ strani.
   un pelo più dell'input normale, quindi il primo colpo è in perdita di
   ~0,002 $ e rientra alla prima rilettura: dentro un turno agentico ce n'è
   sempre almeno una, perché il ciclo degli strumenti fa più di una chiamata.
+- **Il modello si sceglie dalla chat, e il cancello è il prezzo.** Il menu in
+  alto offre solo gli id che stanno in `App\Ai\Pricing`: un modello senza
+  prezzo non è «gratis», è una chiamata rifiutata prima di spendere un token
+  (`ensurePriced`). Quindi far comparire un modello nuovo nel menu è un gesto
+  deliberato di una persona, non una conseguenza dell'uscita del modello. Quelli
+  disponibili sull'account ma non prezzati si vedono come promemoria accanto al
+  menu, senza essere accesi. La scelta viene registrata su ogni risposta
+  (`assistant_messages.model`): se una risposta è secca o sbagliata, la prima
+  domanda utile è su quale modello girava.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.

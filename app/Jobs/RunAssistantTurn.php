@@ -31,6 +31,7 @@ class RunAssistantTurn implements ShouldQueue
         public readonly int $messageId,
         public readonly string $question,
         public readonly Topic $topic = Topic::Finance,
+        public readonly ?string $model = null,
     ) {}
 
     public function handle(Runner $runner): void
@@ -61,7 +62,7 @@ class RunAssistantTurn implements ShouldQueue
                 ->withoutGlobalScope('user')
                 ->whereKey($this->messageId)
                 ->where('status', 'stopped')
-                ->exists());
+                ->exists(), $this->model);
 
             AssistantMessage::query()->whereKey($this->messageId)->update([
                 'content' => $esito['content'],

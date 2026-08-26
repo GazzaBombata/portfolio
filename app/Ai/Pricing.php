@@ -22,9 +22,23 @@ class Pricing
      */
     private const LISTINO = [
         'claude-opus-5' => ['input' => 5.00, 'output' => 25.00, 'cache_read' => 0.50, 'cache_write' => 6.25],
-        'claude-sonnet-5' => ['input' => 3.00, 'output' => 15.00, 'cache_read' => 0.30, 'cache_write' => 3.75],
+        'claude-sonnet-5' => ['input' => 2.00, 'output' => 10.00, 'cache_read' => 0.20, 'cache_write' => 2.50],
         'claude-haiku-4-5' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10, 'cache_write' => 1.25],
+        // Le versioni datate sono lo stesso modello dell'alias qui sopra:
+        // stanno in listino come rete di sicurezza, se un giorno una chiamata
+        // arriva con l'id esteso invece che con l'alias.
+        'claude-haiku-4-5-20251001' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10, 'cache_write' => 1.25],
     ];
+
+    /**
+     * Gli id in listino, cioè quelli che si possono scegliere nella chat.
+     *
+     * @return array<int, string>
+     */
+    public static function models(): array
+    {
+        return array_keys(self::LISTINO);
+    }
 
     public static function isPriced(string $model): bool
     {

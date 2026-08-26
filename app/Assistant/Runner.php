@@ -44,15 +44,21 @@ class Runner
      *                                               l'altro: se torna true, il
      *                                               turno si chiude con quello
      *                                               che ha raccolto.
+     * @param  string|null  $model  scelto dalla chat; se non arriva vale quello
+     *                              di configurazione. Passa comunque da
+     *                              `ensurePriced`, quindi un id arrivato dal
+     *                              browser non può far spendere niente.
      * @return array{content: string, steps: array<int, array{tool: string, summary: ?string}>, stopped?: bool}
      */
-    public function run(string $question, Topic $topic = Topic::Finance, ?callable $shouldStop = null): array
+    public function run(string $question, Topic $topic = Topic::Finance, ?callable $shouldStop = null, ?string $model = null): array
     {
         if ($this->apiKey === '') {
             throw new RuntimeException('ANTHROPIC_API_KEY mancante: impostala per usare l\'assistente.');
         }
 
-        Pricing::ensurePriced($this->model);
+        $model = $model !== null && $model !== '' ? $model : $this->model;
+
+        Pricing::ensurePriced($model);
 
         $client = new Client(apiKey: $this->apiKey);
         $registry = $this->tools($topic);
@@ -85,14 +91,14 @@ class Runner
             Budget::guard();
 
             $response = $client->messages->create(
-                model: $this->model,
+                model: $model,
                 maxTokens: 8192,
                 system: $this->systemBlocks($topic),
                 messages: $messages,
                 tools: $schemas,
             );
 
-            Budget::record('assistente', $this->model, $response->usage);
+            Budget::record('assistente', $model, $response->usage);
 
             if ($response->stopReason === 'refusal') {
                 return ['content' => 'Non me la sento di rispondere a questa richiesta.', 'steps' => $steps];
