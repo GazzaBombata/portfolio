@@ -60,6 +60,8 @@ class Budget
         $input = (int) ($usage->inputTokens ?? 0);
         $output = (int) ($usage->outputTokens ?? 0);
         $cacheRead = (int) ($usage->cacheReadInputTokens ?? 0);
+        // Non è dentro inputTokens: senza questa riga la cache sembrerebbe gratis.
+        $cacheWrite = (int) ($usage->cacheCreationInputTokens ?? 0);
 
         return AiUsage::create([
             'user_id' => $userId ?? auth()->id(),
@@ -68,7 +70,8 @@ class Budget
             'input_tokens' => $input,
             'output_tokens' => $output,
             'cache_read_tokens' => $cacheRead,
-            'cost' => Pricing::cost($model, $input, $output, $cacheRead),
+            'cache_write_tokens' => $cacheWrite,
+            'cost' => Pricing::cost($model, $input, $output, $cacheRead, $cacheWrite),
         ]);
     }
 

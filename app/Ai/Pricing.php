@@ -13,11 +13,17 @@ use RuntimeException;
  */
 class Pricing
 {
-    /** @var array<string, array{input: float, output: float, cache_read: float}> */
+    /**
+     * Prezzo per milione di token. La scrittura in cache costa 1,25× l'input e
+     * la lettura un decimo: è il conto che decide se conviene cachare, quindi
+     * sta scritto qui invece che dedotto ogni volta.
+     *
+     * @var array<string, array{input: float, output: float, cache_read: float, cache_write: float}>
+     */
     private const LISTINO = [
-        'claude-opus-5' => ['input' => 5.00, 'output' => 25.00, 'cache_read' => 0.50],
-        'claude-sonnet-5' => ['input' => 3.00, 'output' => 15.00, 'cache_read' => 0.30],
-        'claude-haiku-4-5' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10],
+        'claude-opus-5' => ['input' => 5.00, 'output' => 25.00, 'cache_read' => 0.50, 'cache_write' => 6.25],
+        'claude-sonnet-5' => ['input' => 3.00, 'output' => 15.00, 'cache_read' => 0.30, 'cache_write' => 3.75],
+        'claude-haiku-4-5' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10, 'cache_write' => 1.25],
     ];
 
     public static function isPriced(string $model): bool
@@ -35,7 +41,7 @@ class Pricing
         }
     }
 
-    public static function cost(string $model, int $input, int $output, int $cacheRead = 0): float
+    public static function cost(string $model, int $input, int $output, int $cacheRead = 0, int $cacheWrite = 0): float
     {
         self::ensurePriced($model);
 
@@ -44,7 +50,8 @@ class Pricing
         return round(
             $input / 1_000_000 * $p['input']
             + $output / 1_000_000 * $p['output']
-            + $cacheRead / 1_000_000 * $p['cache_read'],
+            + $cacheRead / 1_000_000 * $p['cache_read']
+            + $cacheWrite / 1_000_000 * $p['cache_write'],
             6,
         );
     }

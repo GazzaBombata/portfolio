@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $etichette = [
+            'crea_categoria' => '🏷️ Nuova categoria',
             'registra_sonno' => '🌙 Sonno',
             'registra_allenamento' => '🏃 Allenamento',
             'registra_pasto' => '🍽️ Pasto',
@@ -10,6 +11,12 @@
             'cerca_movimenti' => '🔎 Ricerca movimenti',
             'classifica_movimenti' => '🏷️ Classificazione',
             'riepilogo_spese' => '💶 Riepilogo spese',
+            'bilancio_calorico' => '🔥 Bilancio calorico',
+            'imposta_piano' => '🎯 Obiettivo',
+            'pianifica_pasto' => '📋 Pasto previsto',
+            'cerca_registrazioni' => '🔎 Ricerca registrazioni',
+            'modifica_pasto' => '✏️ Pasto corretto',
+            'modifica_allenamento' => '✏️ Allenamento corretto',
         ];
         // Chiesto una volta sola: mentre l'assistente lavora la pagina si
         // ridisegna ogni secondo, e una query per messaggio diventa una
@@ -118,10 +125,17 @@
                 @endif
             @empty
                 <div class="ga-empty">
-                    Raccontami com'è andata e lo registro io.<br><br>
-                    <code>ieri ho corso 40 minuti e dormito male</code><br>
-                    <code>stamattina peso 78,4</code><br>
-                    <code>quanto ho speso di bar questo mese?</code>
+                    @if ($this->topic() === \App\Assistant\Topic::Health)
+                        Raccontami com'è andata e lo registro io.<br><br>
+                        <code>ieri ho corso 40 minuti e dormito male</code><br>
+                        <code>stamattina peso 78,4</code><br>
+                        <code>come sono andato ieri con le calorie?</code>
+                    @else
+                        Chiedimi dei tuoi soldi.<br><br>
+                        <code>quanto ho speso di bar questo mese?</code><br>
+                        <code>cosa c'è ancora da classificare?</code><br>
+                        <code>i bonifici a Paolo sono giroconti, segnali</code>
+                    @endif
                 </div>
             @endforelse
         </div>

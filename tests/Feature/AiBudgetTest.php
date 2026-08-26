@@ -13,6 +13,11 @@ beforeEach(fn () => $this->actingAs(User::factory()->create()));
 it('calcola il costo di una chiamata dai token', function () {
     // Opus 5: 5 $ per milione in ingresso, 25 in uscita.
     expect(Pricing::cost('claude-opus-5', 1_000_000, 100_000))->toBe(7.5);
+
+    // La scrittura in cache costa più dell'input, la lettura un decimo: se
+    // finissero entrambe a zero la cache sembrerebbe gratis, e il tetto
+    // mensile guarderebbe un numero più basso di quello vero.
+    expect(Pricing::cost('claude-opus-5', 0, 0, 1_000_000, 1_000_000))->toBe(6.75);
 });
 
 /*

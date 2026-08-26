@@ -10,7 +10,7 @@ class AiUsage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'kind', 'model', 'input_tokens', 'output_tokens', 'cache_read_tokens', 'cost',
+        'user_id', 'kind', 'model', 'input_tokens', 'output_tokens', 'cache_read_tokens', 'cache_write_tokens', 'cost',
     ];
 
     protected function casts(): array

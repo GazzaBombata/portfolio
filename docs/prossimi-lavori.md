@@ -42,7 +42,7 @@ elencate sotto, ma niente di bloccante.
 
 ## Spese
 
-- [ ] **121 movimenti ancora senza categoria.** Sono bonifici, postagiri e
+- [ ] **Una decina di movimenti ancora senza categoria.** Sono bonifici, postagiri e
       domiciliazioni che i dati non determinano — vanno decisi a mano dal
       pannello o via assistente. Ogni scelta diventa una regola permanente.
 - [ ] **PDF degli estratti ING.** Per ora si usano i CSV, che sono molto più
@@ -56,6 +56,11 @@ Niente di aperto.
 
 - [ ] **Streaming della risposta.** Adesso compare tutta insieme dopo qualche
       secondo di «Sto lavorando…».
+- [ ] **Guardare la colonna `cache_read_tokens`** dopo qualche giorno d'uso
+      vero. Se resta a zero, la cache non sta agganciando: vuol dire che le
+      domande arrivano a più di cinque minuti l'una dall'altra (allora è
+      normale, e il risparmio sta dentro il singolo turno) oppure che qualcosa
+      nel blocco statico cambia fra una chiamata e l'altra (allora è un bug).
 
 ## Infrastruttura
 
@@ -77,6 +82,8 @@ Niente di aperto.
 - [x] Scanner di sicurezza scritto e provato sul server
 - [x] Merge in `main` (resta da fare il push)
 - [x] Reboot del server
+- [x] Due conversazioni separate, spese e salute, con il prompt statico in
+      cache (26/08/2026): gli strumenti erano il 65% del costo di ogni domanda
 
 - [x] Ricostruzione del progetto sullo stack corrente (21/08/2026)
 - [x] Import degli estratti conto di cinque istituti, 664 movimenti

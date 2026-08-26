@@ -7,7 +7,9 @@ use App\Assistant\Tools\LogMealTool;
 use App\Assistant\Tools\LogSleepTool;
 use App\Assistant\Tools\LogWorkoutTool;
 use App\Assistant\Tools\SearchTransactionsTool;
-use App\Filament\Pages\Assistant;
+use App\Assistant\Topic;
+use App\Filament\Pages\FinanceAssistant;
+use App\Filament\Pages\HealthAssistant;
 use App\Jobs\RunAssistantTurn;
 use App\Models\Account;
 use App\Models\AssistantMessage;
@@ -28,14 +30,49 @@ beforeEach(function () {
     $this->actingAs($this->user);
 });
 
-it('apre la pagina della chat', function () {
-    Livewire::test(Assistant::class)->assertSuccessful();
+it('apre le due pagine della chat', function () {
+    Livewire::test(FinanceAssistant::class)->assertSuccessful();
+    Livewire::test(HealthAssistant::class)->assertSuccessful();
+});
+
+/*
+ * Le due conversazioni non si vedono fra loro: è il senso di averle separate,
+ * e se si mescolassero ogni chat si porterebbe dietro il contesto dell'altra —
+ * cioè proprio i token che la divisione voleva risparmiare.
+ */
+it('tiene separate le due conversazioni', function () {
+    Queue::fake();
+
+    Livewire::test(FinanceAssistant::class)->set('question', 'quanto ho speso?')->call('send');
+    Livewire::test(HealthAssistant::class)->set('question', 'ieri ho corso')->call('send');
+
+    expect(AssistantMessage::where('topic', 'finance')->where('role', 'user')->count())->toBe(1)
+        ->and(AssistantMessage::where('topic', 'health')->where('role', 'user')->count())->toBe(1);
+
+    Livewire::test(FinanceAssistant::class)
+        ->assertSee('quanto ho speso?')
+        ->assertDontSee('ieri ho corso');
+});
+
+it('ogni conversazione porta solo i propri strumenti', function () {
+    $runner = new Runner('x', 'y');
+    $m = (new ReflectionClass($runner))->getMethod('tools');
+    $m->setAccessible(true);
+
+    $spese = array_keys($m->invoke($runner, Topic::Finance));
+    $salute = array_keys($m->invoke($runner, Topic::Health));
+
+    expect($spese)->toContain('cerca_movimenti')
+        ->and($spese)->not->toContain('registra_pasto')
+        ->and($salute)->toContain('registra_pasto')
+        // Il consulente della salute non può toccare i movimenti bancari.
+        ->and($salute)->not->toContain('classifica_movimenti');
 });
 
 it('mette in coda il turno e mostra subito la domanda', function () {
     Queue::fake();
 
-    Livewire::test(Assistant::class)
+    Livewire::test(FinanceAssistant::class)
         ->set('question', 'ieri ho corso 40 minuti')
         ->call('send');
 
@@ -50,7 +87,7 @@ it('mette in coda il turno e mostra subito la domanda', function () {
 it('non manda in coda un messaggio vuoto', function () {
     Queue::fake();
 
-    Livewire::test(Assistant::class)->set('question', '   ')->call('send');
+    Livewire::test(FinanceAssistant::class)->set('question', '   ')->call('send');
 
     Queue::assertNothingPushed();
     expect(AssistantMessage::count())->toBe(0);
@@ -166,7 +203,9 @@ function verifica(string $testo, array $steps): string
         $m = (new ReflectionClass($runner))->getMethod('tools');
         $m->setAccessible(true);
 
-        return $m->invoke($runner);
+        // La guardia vale su entrambe le conversazioni: si prova con tutti gli
+        // strumenti insieme.
+        return array_merge($m->invoke($runner, Topic::Finance), $m->invoke($runner, Topic::Health));
     })();
 
     $m = (new ReflectionClass($runner))->getMethod('checked');
@@ -217,7 +256,7 @@ it('non accusa quando ha solo cercato e lo dice', function () {
 it('ferma un turno in corso senza cancellare quello che ha già fatto', function () {
     AssistantMessage::create(['role' => 'assistant', 'content' => null, 'status' => 'pending']);
 
-    Livewire::test(Assistant::class)->call('stop');
+    Livewire::test(FinanceAssistant::class)->call('stop');
 
     expect(AssistantMessage::sole()->status)->toBe('stopped');
 });
@@ -230,7 +269,7 @@ it('ferma un turno in corso senza cancellare quello che ha già fatto', function
 it('chiude il turno dicendo che è stato fermato', function () {
     $runner = new Runner('chiave-finta', 'claude-opus-5');
 
-    $esito = $runner->run('qualcosa', fn (): bool => true);
+    $esito = $runner->run('qualcosa', Topic::Finance, fn (): bool => true);
 
     expect($esito['stopped'])->toBeTrue()
         ->and($esito['content'])->toContain('Fermato');

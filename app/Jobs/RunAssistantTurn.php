@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Assistant\Runner;
+use App\Assistant\Topic;
 use App\Models\AssistantMessage;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,6 +30,7 @@ class RunAssistantTurn implements ShouldQueue
         public readonly int $userId,
         public readonly int $messageId,
         public readonly string $question,
+        public readonly Topic $topic = Topic::Finance,
     ) {}
 
     public function handle(Runner $runner): void
@@ -55,7 +57,7 @@ class RunAssistantTurn implements ShouldQueue
             // Lo stop arriva da un'altra richiesta HTTP, che scrive sulla riga:
             // il worker lo scopre rileggendola, che è l'unico canale che i due
             // processi hanno in comune.
-            $esito = $runner->run($this->question, fn (): bool => AssistantMessage::query()
+            $esito = $runner->run($this->question, $this->topic, fn (): bool => AssistantMessage::query()
                 ->withoutGlobalScope('user')
                 ->whereKey($this->messageId)
                 ->where('status', 'stopped')

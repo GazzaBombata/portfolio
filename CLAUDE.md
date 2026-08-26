@@ -97,6 +97,22 @@ strani.
 - **Lo sport si somma al fabbisogno, non si nasconde in un fattore.** Un
   `activity_factor` alto darebbe lo stesso fabbisogno a una settimana ferma e a
   una di allenamenti — cioè cancellerebbe la differenza che si vuole vedere.
+- **Le conversazioni dell'assistente sono due, spese e salute**, e non si
+  vedono fra loro. Non è una divisione di comodo: la misura su un mese d'uso
+  diceva che il 65% dell'input di ogni domanda erano le definizioni dei sedici
+  strumenti (2.438 token) più il prompt, non la conversazione — che era già
+  tagliata a dodici messaggi. Un consulente che non può toccare i pasti non ha
+  motivo di portarsi dietro come si registrano. Chat spese: 4 strumenti. Chat
+  salute: 12.
+- **Il prompt di sistema è spezzato in due blocchi**: uno statico (istruzioni e
+  regole del dominio) marcato `cacheControl`, uno variabile (la data di oggi,
+  il profilo, le categorie). L'ordine in cui l'API costruisce il prompt è
+  strumenti → sistema → messaggi: se la data stesse nel blocco statico, ogni
+  giorno invaliderebbe anche la cache degli strumenti che le stanno davanti.
+- **La scrittura in cache si paga** (1,25× l'input) e non è dentro
+  `inputTokens`. `App\Ai\Budget` la registra a parte: contarla zero farebbe
+  guardare al tetto mensile una spesa più bassa di quella vera, che è il modo
+  esatto in cui un tetto di spesa smette di servire.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.
