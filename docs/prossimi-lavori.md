@@ -84,6 +84,10 @@ Niente di aperto.
 - [x] Reboot del server
 - [x] Due conversazioni separate, spese e salute, con il prompt statico in
       cache (26/08/2026): gli strumenti erano il 65% del costo di ogni domanda
+- [x] Riquadro «Oggi» in dashboard: piano contro mangiato, fabbisogno contro
+      mangiato, e il confronto pasto per pasto (27/08/2026)
+- [x] Obiettivo calorico ricavato dai pasti previsti, invece di chiederlo (27/08/2026)
+- [x] Secondo fattore ricordato sette giorni per dispositivo, con revoca dal profilo
 - [x] Costo della chat più che dimezzato (27/08/2026): Sonnet come predefinito
       e cache dei messaggi nel ciclo degli strumenti
 - [x] Scelta del modello dal menu della chat, con il prezzo come cancello

@@ -2,8 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Auth\RememberedAppAuthentication;
+use App\Filament\Auth\Login;
 use App\Filament\Pages\Dashboard;
-use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             // telefono: stessa icona del sito, non quella di Filament.
             ->favicon(asset('icons/icon-192.png'))
             ->brandName('Giorgio Giotto')
-            ->login()
+            ->login(Login::class)
             /*
              * Recupero password via email.
              *
@@ -50,7 +51,12 @@ class AdminPanelProvider extends PanelProvider
              * set-up screen at their next login.
              */
             ->multiFactorAuthentication(
-                AppAuthentication::make()
+                /*
+                 * Il codice non si ridigita per una settimana sullo stesso
+                 * dispositivo: vedi App\Auth\TrustedDevices. Resta
+                 * obbligatorio da configurare e da superare la prima volta.
+                 */
+                RememberedAppAuthentication::make()
                     ->recoverable()
                     ->brandName('Giorgio Giotto'),
                 isRequired: true,

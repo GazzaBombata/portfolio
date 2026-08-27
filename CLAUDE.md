@@ -77,6 +77,19 @@ strani.
   prezzo è che **ogni conto calorico deve filtrare `eaten()`**: contare anche
   il piano fa risultare rispettata una giornata in cui non si è mangiato niente
   di quello, e il numero resta plausibile, quindi nessuno se ne accorge.
+- **Obiettivo e fabbisogno sono due numeri diversi**, e scambiarli è l'errore
+  che questa applicazione deve rendere impossibile. L'obiettivo è quanto ho
+  deciso di mangiare — la SOMMA dei pasti previsti del giorno, che
+  `Energy::target()` ricava da sola e nessuno deve digitare. Il fabbisogno è
+  quanto brucio, e viene da `Energy::dailyNeed()`. Prima `imposta_piano`
+  metteva il secondo al posto del primo: su una giornata da 1.575 kcal di
+  piano annunciava un obiettivo di 3.000, cioè diceva che c'era margine dove
+  non ce n'era. Un obiettivo scritto a mano (`targets_manual`) vince su
+  entrambi: se una persona l'ha detto, non lo si ricalcola sotto i suoi piedi.
+- **Un pasto previsto senza calorie abbassa l'obiettivo** e la differenza si
+  legge come margine disponibile. Non è correggibile — nessuno sa quante
+  calorie fosse quel pasto — quindi `plannedWithoutCalories()` lo conta e sia
+  il riquadro sia l'assistente lo dicono.
 - **I passi contano nel fabbisogno**, ma solo quelli oltre i 5.000 che il
   fattore di attività già comprende. Le attività a piedi (camminata, corsa)
   **non vanno registrate come allenamento**: i passi le contengono già, e
@@ -146,6 +159,14 @@ strani.
   menu, senza essere accesi. La scelta viene registrata su ogni risposta
   (`assistant_messages.model`): se una risposta è secca o sbagliata, la prima
   domanda utile è su quale modello girava.
+- **Il secondo fattore non si ridigita per sette giorni sullo stesso
+  dispositivo** (`App\Auth\TrustedDevices`). Il cookie si emette SOLO nel
+  login in cui la sfida è stata davvero superata: riemetterlo anche negli
+  accessi che la saltano rinnoverebbe la scadenza da sé, e «una volta a
+  settimana» diventerebbe «mai più» proprio sul portatile che si usa tutti i
+  giorni. La scadenza non è scorrevole, il token in tabella è solo un'impronta,
+  la fiducia è legata all'utente, e dal profilo si revoca tutto in un clic —
+  che è l'unico modo di chiudere la finestra quando un portatile si perde.
 - **La pagina scrive la domanda in tabella e POI mette in coda il turno**, e
   la storia che il modello riceve la comprende già: `Runner::history()` non
   deve appenderla una seconda volta. È stato un bug per giorni senza rompere

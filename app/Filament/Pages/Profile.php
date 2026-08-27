@@ -2,15 +2,18 @@
 
 namespace App\Filament\Pages;
 
+use App\Auth\TrustedDevices;
 use App\Health\Energy;
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -98,6 +101,42 @@ class Profile extends Page
                             ->rows(3)
                             ->placeholder('Nessuna patologia nota.')
                             ->helperText('Testo libero, lo legge anche l\'assistente. Non è una cartella clinica.'),
+                    ]),
+
+                /*
+                 * L'unico modo di chiudere la finestra dei sette giorni prima
+                 * che scada. Senza questo bottone, un portatile perso resta un
+                 * accesso valido fino alla scadenza e non c'è niente da fare —
+                 * che è ciò che rende inaccettabile un «ricorda il
+                 * dispositivo».
+                 */
+                Section::make('Dispositivi che non chiedono il codice')
+                    ->description(fn (): string => match ($n = TrustedDevices::activeFor(Auth::user())) {
+                        0 => 'Nessuno: il codice dell\'app viene chiesto a ogni accesso.',
+                        1 => 'Un dispositivo non chiede il codice per '.TrustedDevices::DAYS.' giorni dall\'ultima volta che l\'hai inserito.',
+                        default => "{$n} dispositivi non chiedono il codice per ".TrustedDevices::DAYS.' giorni dall\'ultima volta che l\'hai inserito.',
+                    })
+                    ->schema([
+                        Actions::make([
+                            Action::make('revocaDispositivi')
+                                ->label('Chiedimi di nuovo il codice ovunque')
+                                ->icon('heroicon-m-shield-exclamation')
+                                ->color('danger')
+                                ->requiresConfirmation()
+                                ->modalHeading('Revoco tutti i dispositivi?')
+                                ->modalDescription('Al prossimo accesso il codice dell\'app verrà chiesto di nuovo su ogni dispositivo, questo compreso.')
+                                ->action(function (): void {
+                                    $quanti = TrustedDevices::forgetAll(Auth::user());
+
+                                    Notification::make()
+                                        ->title($quanti === 0 ? 'Non c\'era niente da revocare' : 'Dispositivi revocati')
+                                        ->body($quanti === 0
+                                            ? 'Il codice era già richiesto a ogni accesso.'
+                                            : 'Il codice verrà richiesto di nuovo ovunque, questo dispositivo compreso.')
+                                        ->success()
+                                        ->send();
+                                }),
+                        ]),
                     ]),
             ])
             ->statePath('data');
