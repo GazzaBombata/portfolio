@@ -159,6 +159,22 @@ class Runner
                 $steps[] = ['tool' => $chiamata['name'], 'summary' => $esito->summary];
             }
 
+            /*
+             * Un segnaposto di cache in coda ai risultati.
+             *
+             * Il giro successivo rispedisce TUTTO quello che c'è stato finora —
+             * prompt, domanda, richieste di strumenti, risultati — e senza
+             * questo lo ripagherebbe intero a ogni giro. Sui dati veri il
+             * secondo giro rimandava tremila token già mandati un secondo
+             * prima. Marcato l'ultimo blocco, quello che sta davanti si rilegge
+             * a un decimo.
+             *
+             * Il segnaposto si sposta: Anthropic ne accetta pochi, e uno per
+             * giro li esaurirebbe in un turno un po' lungo.
+             */
+            $risultati[count($risultati) - 1]['cacheControl'] = ['type' => 'ephemeral'];
+            $messages = $this->withoutStaleBreakpoints($messages);
+
             $messages[] = ['role' => 'user', 'content' => $risultati];
         }
 
@@ -166,6 +182,29 @@ class Runner
             'content' => 'Ho fatto parecchi passaggi senza arrivare in fondo. Ecco cosa ho raccolto: dimmi tu come procedere.',
             'steps' => $steps,
         ];
+    }
+
+    /**
+     * Toglie i segnaposto di cache lasciati dai giri precedenti.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     * @return array<int, array<string, mixed>>
+     */
+    private function withoutStaleBreakpoints(array $messages): array
+    {
+        foreach ($messages as $i => $messaggio) {
+            if (! is_array($messaggio['content'] ?? null)) {
+                continue;
+            }
+
+            foreach ($messaggio['content'] as $j => $blocco) {
+                if (is_array($blocco) && isset($blocco['cacheControl'])) {
+                    unset($messages[$i]['content'][$j]['cacheControl']);
+                }
+            }
+        }
+
+        return $messages;
     }
 
     /**

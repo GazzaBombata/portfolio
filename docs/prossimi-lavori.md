@@ -84,6 +84,8 @@ Niente di aperto.
 - [x] Reboot del server
 - [x] Due conversazioni separate, spese e salute, con il prompt statico in
       cache (26/08/2026): gli strumenti erano il 65% del costo di ogni domanda
+- [x] Costo della chat più che dimezzato (27/08/2026): Sonnet come predefinito
+      e cache dei messaggi nel ciclo degli strumenti
 - [x] Scelta del modello dal menu della chat, con il prezzo come cancello
       (26/08/2026). Nell'occasione: il prezzo di Sonnet 5 in listino era quello
       di Sonnet 4.6 — 3/15 invece di 2/10 — quindi il conteggio sovrastimava.

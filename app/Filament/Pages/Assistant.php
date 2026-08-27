@@ -122,7 +122,7 @@ abstract class Assistant extends Page
 
     private static function defaultModel(): string
     {
-        $predefinito = (string) config('ai.model');
+        $predefinito = (string) (config('ai.assistant_model') ?: config('ai.model'));
 
         return $predefinito !== '' ? $predefinito : (Pricing::models()[0] ?? 'claude-opus-5');
     }

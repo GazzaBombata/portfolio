@@ -120,6 +120,23 @@ strani.
   un pelo più dell'input normale, quindi il primo colpo è in perdita di
   ~0,002 $ e rientra alla prima rilettura: dentro un turno agentico ce n'è
   sempre almeno una, perché il ciclo degli strumenti fa più di una chiamata.
+- **La chat gira su Sonnet, la classificazione su Opus** (`ai.assistant_model`
+  contro `ai.model`). Sono due lavori diversi: classificare un esercente è una
+  decisione secca su una riga e uno sbaglio finisce nei report senza farsi
+  notare, mentre la chat per lo più legge numeri che gli strumenti hanno già
+  calcolato. Sulla stessa domanda Sonnet è costato 0,019 $ contro 0,030 $.
+- **Il ciclo degli strumenti mette un segnaposto di cache in coda ai
+  risultati**, e lo sposta a ogni giro. Senza, il giro dopo rispedisce a prezzo
+  pieno tutto quello che il giro prima ha già mandato — sui dati veri erano
+  duemila token rimandati un secondo dopo. Conviene dal terzo giro in poi:
+  scrivere costa il 25% in più che mandare e basta, rileggere costa il 90% in
+  meno, e i turni veri stanno sui tre-quattro giri. Sui turni da due giri è
+  circa pari.
+- **Dove vanno i soldi, misurato il 27/08/2026**: prima della divisione in due
+  chat 0,076 $ a chiamata, dopo 0,036 $. Di quel che resta, ~45% è input nuovo
+  (risultati degli strumenti e conversazione), ~36% output, ~18% cache. Il
+  thinking **non** è la voce grossa: disattivarlo cambiava pochi centesimi di
+  centesimo, quindi resta acceso.
 - **Il modello si sceglie dalla chat, e il cancello è il prezzo.** Il menu in
   alto offre solo gli id che stanno in `App\Ai\Pricing`: un modello senza
   prezzo non è «gratis», è una chiamata rifiutata prima di spendere un token

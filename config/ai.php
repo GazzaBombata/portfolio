@@ -9,6 +9,20 @@ return [
     'model' => env('AI_MODEL', 'claude-opus-5'),
 
     /*
+     * Il modello della chat, tenuto separato da quello che classifica.
+     *
+     * Sono due lavori diversi. Classificare un esercente è una decisione secca
+     * su una riga, e uno sbaglio finisce dentro i report senza farsi notare:
+     * lì si paga Opus. La chat invece è quasi tutta lettura di dati già
+     * calcolati dagli strumenti, e su una domanda vera Sonnet è costato la
+     * metà — 0,019 $ contro 0,030 $ — senza che la risposta cambiasse.
+     *
+     * Non è una scelta definitiva: il menu in cima alla conversazione la
+     * cambia in un clic, e la scelta resta su quella chat.
+     */
+    'assistant_model' => env('AI_ASSISTANT_MODEL', 'claude-sonnet-5'),
+
+    /*
      * Le etichette del menu «Modello» nella chat, id => testo.
      *
      * È solo una mappa di visualizzazione: un modello è SCEGLIIBILE quando ha

@@ -301,7 +301,7 @@ it('offre solo i modelli che hanno un prezzo', function () {
 it('parte dal modello predefinito e ricorda quello scelto', function () {
     Queue::fake();
 
-    expect(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe(config('ai.model'));
+    expect(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe(config('ai.assistant_model'));
 
     Livewire::test(HealthAssistant::class)
         ->set('chatModel', 'claude-haiku-4-5')
@@ -325,7 +325,7 @@ it('ignora un modello non in elenco arrivato dal browser', function () {
 
     // Torna al predefinito invece di scrivere in tabella un id che poi
     // fallirebbe a valle: l'errore si vedrebbe come una risposta rotta.
-    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === config('ai.model'));
+    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === config('ai.assistant_model'));
 });
 
 it('riconosce la variante datata di un modello', function () {
@@ -341,4 +341,32 @@ it('non chiede il catalogo ad Anthropic senza chiave', function () {
     expect((new ModelCatalog)->names())->toBe([]);
 
     Http::assertNothingSent();
+});
+
+/*
+ * Il segnaposto di cache in coda ai risultati degli strumenti.
+ *
+ * Senza, ogni giro del ciclo ripaga a prezzo pieno tutto quello che il giro
+ * prima ha già mandato. È una riga sola e non si vede da nessuna parte se
+ * sparisce: si vedrebbe solo in fattura, un mese dopo.
+ */
+it('sposta il segnaposto di cache invece di accumularne uno per giro', function () {
+    $runner = new Runner('x', 'y');
+    $m = (new ReflectionClass($runner))->getMethod('withoutStaleBreakpoints');
+    $m->setAccessible(true);
+
+    $messaggi = [
+        ['role' => 'user', 'content' => 'domanda'],
+        ['role' => 'user', 'content' => [
+            ['type' => 'tool_result', 'content' => 'a'],
+            ['type' => 'tool_result', 'content' => 'b', 'cacheControl' => ['type' => 'ephemeral']],
+        ]],
+    ];
+
+    $puliti = $m->invoke($runner, $messaggi);
+
+    expect($puliti[1]['content'][1])->not->toHaveKey('cacheControl')
+        // Il contenuto non va toccato: si toglie il segnaposto, non il risultato.
+        ->and($puliti[1]['content'][1]['content'])->toBe('b')
+        ->and($puliti[0]['content'])->toBe('domanda');
 });

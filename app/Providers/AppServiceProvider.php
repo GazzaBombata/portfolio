@@ -21,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(Runner::class, fn (): Runner => new Runner(
             apiKey: (string) config('ai.key'),
-            model: (string) config('ai.model'),
+            // Quello della chat, non quello che classifica: vedi config/ai.php.
+            model: (string) (config('ai.assistant_model') ?: config('ai.model')),
         ));
     }
 
