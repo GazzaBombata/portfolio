@@ -167,6 +167,16 @@ strani.
   giorni. La scadenza non è scorrevole, il token in tabella è solo un'impronta,
   la fiducia è legata all'utente, e dal profilo si revoca tutto in un clic —
   che è l'unico modo di chiudere la finestra quando un portatile si perde.
+- **Il link alla dashboard sotto una risposta lo mette la pagina, non il
+  modello** (`Topic::writingTools()`), e solo dove uno strumento che scrive è
+  stato davvero eseguito. Un indirizzo generato a parole si paga in token a
+  ogni turno e prima o poi esce sbagliato; e un link sotto OGNI risposta
+  diventa arredamento, cioè smette di voler dire «guarda qui che è cambiato».
+- **Il pannello si usa dal telefono**, ed è da lì che si detta un pasto appena
+  finito di mangiare. Le view custom (chat e riquadro «Oggi») si vestono da
+  sole, quindi il caso stretto va scritto a mano: sotto i 30rem le righe dei
+  pasti mettono nome e calorie sopra e le barre a tutta larghezza, perché una
+  barra lunga un centimetro non si confronta con niente.
 - **La pagina scrive la domanda in tabella e POI mette in coda il turno**, e
   la storia che il modello riceve la comprende già: `Runner::history()` non
   deve appenderla una seconda volta. È stato un bug per giorni senza rompere

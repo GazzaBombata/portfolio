@@ -85,8 +85,21 @@
             .nt-mini.mangiato { background: #2a78d6; }
             .nt-kcal { font-size: .75rem; color: rgb(113 113 122); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
+            /* Da telefono le tre colonne lasciano alle barre un centinaio di
+               pixel, e una barra lunga un centimetro non si confronta con
+               niente. Nome e calorie salgono su una riga loro, le barre si
+               prendono tutta la larghezza: è il confronto il motivo per cui
+               questo blocco esiste. */
+            /* Da telefono le tre colonne lascerebbero alle barre un centinaio
+               di pixel, e una barra lunga un centimetro non si confronta con
+               niente. Nome e calorie restano sulla prima riga, le barre passano
+               sotto a tutta larghezza: è il confronto il motivo per cui questo
+               blocco esiste. Si riordina con `order`, senza markup in più. */
             @media (max-width: 30rem) {
-                .nt-riga { grid-template-columns: 4.5rem 1fr auto; gap: .5rem; }
+                .nt-riga { display: flex; flex-wrap: wrap; align-items: baseline; gap: .15rem .5rem; padding: .45rem 0; }
+                .nt-nome { order: 1; flex: 1 1 auto; }
+                .nt-kcal { order: 2; }
+                .nt-coppia { order: 3; flex: 0 0 100%; margin-top: .15rem; }
             }
         </style>
 
@@ -176,6 +189,9 @@
 
             @foreach ($pasti as $riga)
                 <div class="nt-riga">
+                    {{-- Nome e calorie in un contenitore comune: da telefono
+                         diventano la riga sopra le barre, su schermo restano
+                         le due colonne laterali. --}}
                     <span class="nt-nome">{{ $riga['nome'] }}</span>
 
                     <div class="nt-coppia">

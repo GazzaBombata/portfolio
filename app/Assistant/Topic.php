@@ -122,4 +122,24 @@ enum Topic: string
             TXT,
         };
     }
+
+    /**
+     * I nomi degli strumenti di questa conversazione che scrivono qualcosa.
+     *
+     * Serve alla chat per mettere il link alla dashboard sotto le risposte che
+     * hanno registrato davvero — e solo a quelle. Il calcolo si fa qui e non
+     * chiedendolo al modello: un indirizzo generato a parole ogni volta si
+     * paga in token e prima o poi esce sbagliato, mentre questo o c'è o non
+     * c'è.
+     *
+     * @return array<int, string>
+     */
+    public function writingTools(): array
+    {
+        return collect($this->tools())
+            ->filter(fn (Tool $t): bool => $t instanceof ChangesSomething)
+            ->map(fn (Tool $t): string => $t->name())
+            ->values()
+            ->all();
+    }
 }

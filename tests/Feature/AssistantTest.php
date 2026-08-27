@@ -403,3 +403,35 @@ it('appende la domanda quando non è già in tabella', function () {
     expect($m->invoke($runner, 'quanto ho speso?', Topic::Finance))
         ->toBe([['role' => 'user', 'content' => 'quanto ho speso?']]);
 });
+
+/*
+ * Il link alla dashboard compare solo dove qualcosa è stato scritto davvero.
+ * Sotto ogni risposta diventerebbe arredamento, e smetterebbe di voler dire
+ * «guarda qui che è cambiato».
+ */
+it('mette il link alla dashboard solo dopo una registrazione', function () {
+    AssistantMessage::create([
+        'topic' => 'health', 'role' => 'assistant', 'status' => 'done',
+        'content' => 'Segnato il pranzo.',
+        'steps' => [['tool' => 'registra_pasto', 'summary' => 'pranzo']],
+    ]);
+
+    Livewire::test(HealthAssistant::class)->assertSee('Vedi come sei messo oggi');
+});
+
+it('non mette il link dopo una risposta che ha solo letto', function () {
+    AssistantMessage::create([
+        'topic' => 'health', 'role' => 'assistant', 'status' => 'done',
+        'content' => 'Ieri hai dormito sette ore.',
+        'steps' => [['tool' => 'riepilogo_salute', 'summary' => 'ultimi 7 giorni']],
+    ]);
+
+    Livewire::test(HealthAssistant::class)->assertDontSee('Vedi come sei messo oggi');
+});
+
+it('sa quali strumenti scrivono, in entrambe le conversazioni', function () {
+    expect(Topic::Health->writingTools())->toContain('registra_pasto')
+        ->and(Topic::Health->writingTools())->not->toContain('riepilogo_salute')
+        ->and(Topic::Finance->writingTools())->toContain('classifica_movimenti')
+        ->and(Topic::Finance->writingTools())->not->toContain('cerca_movimenti');
+});

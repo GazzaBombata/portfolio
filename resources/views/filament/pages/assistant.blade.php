@@ -22,6 +22,8 @@
         // ridisegna ogni secondo, e una query per messaggio diventa una
         // conversazione che rallenta proprio mentre si allunga.
         $thinking = $this->thinking;
+        // Una volta sola: la pagina si ridisegna ogni secondo mentre lavora.
+        $scrivono = $this->topic()->writingTools();
     @endphp
 
     {{-- Il CSS precompilato del pannello non porta le utility Tailwind nelle
@@ -80,6 +82,16 @@
         .dark .ga-chip { background: rgb(49 46 129); color: rgb(199 210 254); }
         .ga-chip .muted { opacity: .75; }
 
+        /* Il link alla dashboard sotto una risposta che ha registrato
+           qualcosa. Da telefono è il gesto naturale dopo aver dettato un
+           pasto: vedere che è finito dove doveva. */
+        .ga-vedi { display: inline-flex; align-items: center; gap: .3rem; align-self: flex-start;
+            font-size: .75rem; font-weight: 500; text-decoration: none; padding: .3rem .7rem;
+            border-radius: 9999px; border: 1px solid rgb(224 231 255); background: rgb(238 242 255);
+            color: rgb(67 56 202); }
+        .ga-vedi:hover { background: rgb(224 231 255); }
+        .dark .ga-vedi { background: rgb(49 46 129); border-color: rgb(67 56 202); color: rgb(199 210 254); }
+
         .ga-form { display: flex; gap: .5rem; padding: .75rem; border-top: 1px solid rgb(228 228 231); align-items: flex-end; }
         .dark .ga-form { border-color: rgb(63 63 70); }
         .ga-form textarea { flex: 1; resize: none; border: 1px solid rgb(212 212 216); border-radius: .625rem;
@@ -90,6 +102,17 @@
         .ga-empty { margin: auto; text-align: center; color: rgb(113 113 122); font-size: .875rem; max-width: 30rem; line-height: 1.6; }
         .ga-empty code { background: rgb(244 244 245); padding: .1rem .35rem; border-radius: .25rem; font-size: .8125rem; }
         .dark .ga-empty code { background: rgb(39 39 42); }
+
+        /* Da telefono lo schermo è già poco: 16rem di margine lasciavano alla
+           conversazione una finestrella. Ed è dal telefono che si detta un
+           pasto appena finito di mangiare, cioè il momento in cui questa
+           schermata serve davvero. */
+        @media (max-width: 40rem) {
+            .ga-chat { height: calc(100vh - 11rem); }
+            .ga-msgs { padding: .875rem; }
+            .ga-col { max-width: 100%; }
+            .ga-form { padding: .5rem; }
+        }
     </style>
 
     <div class="ga-chat">
@@ -168,6 +191,16 @@
                                 <div class="ga-bubble theirs">{{ $messaggio->content ?: 'Fermato.' }}</div>
                             @else
                                 <div class="ga-bubble theirs">{{ $messaggio->content }}</div>
+                            @endif
+
+                            {{-- Solo dove qualcosa è stato scritto davvero: un
+                                 link sotto ogni risposta diventa arredamento e
+                                 smette di voler dire «guarda qui». --}}
+                            @if (collect($messaggio->steps ?? [])->pluck('tool')->intersect($scrivono)->isNotEmpty())
+                                <a class="ga-vedi" href="{{ \App\Filament\Pages\Dashboard::getUrl() }}">
+                                    <x-filament::icon icon="heroicon-m-chart-bar" style="width:.85rem;height:.85rem" />
+                                    Vedi come sei messo oggi
+                                </a>
                             @endif
                         </div>
                     </div>
