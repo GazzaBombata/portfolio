@@ -228,6 +228,49 @@ class Energy
         return (int) Meal::query()->planned()->whereDate('eaten_on', $day)->sum('calories');
     }
 
+    /**
+     * L'obiettivo calorico di un giorno: quanto ho deciso di mangiare.
+     *
+     * Non è il fabbisogno — quello è quanto brucio — ed è la confusione che
+     * questo metodo esiste per togliere di mezzo. Nell'ordine:
+     *
+     * 1. un obiettivo scritto a mano, che vince sempre: se una persona l'ha
+     *    detto, non lo ricalcoliamo sotto i suoi piedi;
+     * 2. altrimenti la somma dei pasti PREVISTI del giorno, che è il piano
+     *    nutrizionale e non va chiesto a nessuno: è già in tabella;
+     * 3. altrimenti niente. Non il fabbisogno al suo posto: sono due numeri
+     *    diversi, e metterne uno dove ci si aspetta l'altro produce una
+     *    percentuale plausibile e sbagliata.
+     */
+    public static function target(CarbonImmutable $day): ?int
+    {
+        $log = DailyLog::query()->firstWhere('logged_on', $day->toDateString());
+
+        if ($log?->targets_manual && $log->target_calories !== null) {
+            return (int) $log->target_calories;
+        }
+
+        $daPiano = static::planned($day);
+
+        return $daPiano > 0 ? $daPiano : null;
+    }
+
+    /**
+     * Quanti pasti previsti non hanno le calorie.
+     *
+     * L'obiettivo derivato dal piano è la SOMMA dei pasti previsti: se uno di
+     * quelli non ha un valore, la somma esce più bassa del piano vero e la
+     * percentuale che ne deriva dice che c'è più margine di quanto ce ne sia.
+     * Non è correggibile in automatico — nessuno sa quante calorie fosse quel
+     * pasto — quindi si segnala.
+     */
+    public static function plannedWithoutCalories(CarbonImmutable $day): int
+    {
+        return Meal::query()->planned()->whereDate('eaten_on', $day)
+            ->where(fn ($q) => $q->whereNull('calories')->orWhere('calories', 0))
+            ->count();
+    }
+
     private static function metFor(string $activity): float
     {
         $nome = mb_strtolower(trim($activity));

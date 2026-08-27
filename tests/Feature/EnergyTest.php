@@ -113,13 +113,17 @@ it('mette il bilancio del giorno in una risposta leggibile', function () {
         ->and($esito->content)->toContain('stime');
 });
 
-it('registra il piano calcolando l\'obiettivo quando non glielo dai', function () {
+it('senza un numero esplicito registra il piano, non il fabbisogno', function () {
     BodyMetric::create(['measured_on' => now(), 'weight_kg' => 80.0]);
+    Meal::create(['kind' => 'planned', 'eaten_on' => now(), 'moment' => 'lunch', 'description' => 'riso e pollo', 'calories' => 665]);
 
     (new SetNutritionPlanTool)->run(['giorno' => now()->toDateString()]);
 
     $log = DailyLog::sole();
-    expect($log->target_calories)->toBe(Energy::dailyNeed($this->user, CarbonImmutable::now()))
+
+    // 665, non il fabbisogno: obiettivo è quanto ho deciso di mangiare,
+    // fabbisogno è quanto brucio, e scambiarli falsa ogni percentuale.
+    expect($log->target_calories)->toBe(665)
         ->and($log->targets_manual)->toBeFalse();
 });
 
@@ -133,8 +137,56 @@ it('rispetta l\'obiettivo che gli dai, senza ricalcolarlo', function () {
 });
 
 it('dice cosa manca invece di fallire in silenzio', function () {
+    // Senza pasti previsti non c'è un piano da sommare: lo dice e si ferma,
+    // invece di mettere al suo posto il fabbisogno — che è un altro numero.
     $esito = (new SetNutritionPlanTool)->run(['giorno' => now()->toDateString()]);
 
     expect($esito->isError)->toBeTrue()
-        ->and($esito->content)->toContain('peso');
+        ->and($esito->content)->toContain('pianifica_pasto');
+});
+
+/*
+ * L'obiettivo di un giorno è la somma dei pasti previsti, e non lo si chiede
+ * a nessuno: è già in tabella. Prima veniva messo al suo posto il FABBISOGNO,
+ * cioè quanto si brucia — e su una giornata da 1.575 kcal di piano l'assistente
+ * annunciava un obiettivo di 3.000, cioè diceva che c'era margine dove non ce
+ * n'era.
+ */
+it('ricava l\'obiettivo del giorno dai pasti previsti', function () {
+    $oggi = CarbonImmutable::today();
+
+    Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'riso e pollo', 'calories' => 665]);
+    Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'dinner', 'description' => 'pesce e verdure', 'calories' => 730]);
+    // Quello mangiato non c'entra con l'obiettivo: è l'altro lato del confronto.
+    Meal::create(['kind' => 'eaten', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'ossobuco', 'calories' => 840]);
+
+    expect(Energy::target($oggi))->toBe(1395);
+});
+
+it('lascia vincere un obiettivo deciso a mano', function () {
+    $oggi = CarbonImmutable::today();
+    Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 665]);
+
+    (new SetNutritionPlanTool)->run(['giorno' => $oggi->toDateString(), 'obiettivo_calorie' => 1800]);
+
+    // Se una persona l'ha detto, non glielo si ricalcola sotto i piedi.
+    expect(Energy::target($oggi))->toBe(1800);
+});
+
+it('non inventa un obiettivo quando non c\'è piano', function () {
+    expect(Energy::target(CarbonImmutable::today()))->toBeNull();
+});
+
+/*
+ * Un pasto previsto senza calorie abbassa la somma, e la differenza si legge
+ * come margine disponibile: non è correggibile — nessuno sa quante calorie
+ * fosse — quindi va segnalato.
+ */
+it('conta i pasti previsti senza calorie', function () {
+    $oggi = CarbonImmutable::today();
+    Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 665]);
+    Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'dinner', 'description' => 'cena fuori']);
+
+    expect(Energy::plannedWithoutCalories($oggi))->toBe(1)
+        ->and(Energy::target($oggi))->toBe(665);
 });

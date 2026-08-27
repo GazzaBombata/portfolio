@@ -113,9 +113,18 @@ class EnergyBalanceTool implements Tool
             $righe[] = "- Fabbisogno stimato: {$fabbisogno} kcal (basale + vita quotidiana + attività del giorno)";
         }
 
-        $obiettivo = $log?->target_calories;
+        $obiettivo = Energy::target($giorno);
         if ($obiettivo !== null) {
-            $righe[] = "- Obiettivo del piano: {$obiettivo} kcal".($log->targets_manual ? ' (impostato a mano)' : '');
+            $righe[] = "- Obiettivo del piano: {$obiettivo} kcal"
+                .($log?->targets_manual ? ' (impostato a mano)' : ' (somma dei pasti previsti)');
+
+            // Un piano incompleto fa una somma più bassa del piano vero, e la
+            // differenza si legge come margine disponibile.
+            $senza = Energy::plannedWithoutCalories($giorno);
+            if ($senza > 0) {
+                $righe[] = "  ATTENZIONE: {$senza} ".($senza === 1 ? 'pasto previsto è' : 'pasti previsti sono')
+                    .' senza calorie, quindi l\'obiettivo qui sopra è più basso del piano vero.';
+            }
         }
 
         $righe[] = $assunte > 0

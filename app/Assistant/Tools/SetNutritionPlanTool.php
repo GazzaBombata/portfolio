@@ -19,7 +19,10 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
 
     public function description(): string
     {
-        return "Imposta l'obiettivo calorico di un giorno. Se non lo indichi, lo calcola dal fabbisogno stimato. Per registrare cosa era previsto mangiare pasto per pasto usa pianifica_pasto.";
+        return "Forza l'obiettivo calorico di un giorno a un valore deciso da Giorgio. "
+            ."NON SERVE per l'uso normale: se i pasti previsti del giorno sono registrati con pianifica_pasto, "
+            ."l'obiettivo è già la loro somma e lo calcola il sistema da solo — non chiederglielo. "
+            .'Usalo solo quando ti dà lui un numero esplicito diverso dal piano.';
     }
 
     public function schema(): array
@@ -42,12 +45,21 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
         $aMano = $obiettivo !== null;
 
         if ($obiettivo === null) {
-            $obiettivo = Energy::dailyNeed(Auth::user(), $giorno);
+            /*
+             * Senza un numero esplicito si prende il piano — la somma dei pasti
+             * previsti — e NON il fabbisogno.
+             *
+             * Sono due cose diverse: l'obiettivo è quanto ho deciso di mangiare,
+             * il fabbisogno è quanto brucio. Mettere il secondo dove ci si
+             * aspetta il primo dava un obiettivo di 3.000 kcal a una giornata da
+             * 1.575 di piano, cioè diceva che c'era margine dove non ce n'era.
+             */
+            $obiettivo = Energy::planned($giorno) ?: null;
 
             if ($obiettivo === null) {
                 return ToolResult::error(
-                    'Non posso calcolare il fabbisogno: nel profilo mancano data di nascita, altezza o sesso, '
-                    .'oppure non c\'è nessuna misurazione del peso. Chiedi a Giorgio di completarli, o dammi tu un obiettivo.'
+                    'Non c\'è nessun pasto previsto per quel giorno, quindi non posso ricavare un obiettivo dal piano. '
+                    .'Registra i pasti previsti con pianifica_pasto, oppure dammi tu il numero.'
                 );
             }
         }
@@ -64,7 +76,7 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
 
         return ToolResult::ok(
             "Piano del {$giorno->format('d/m/Y')}: obiettivo {$log->target_calories} kcal"
-            .($aMano ? ' (come mi hai detto tu).' : ' (calcolato dal fabbisogno).'),
+            .($aMano ? ' (come mi hai detto tu).' : ' (somma dei pasti previsti).'),
             $giorno->format('d/m').' · obiettivo '.$log->target_calories.' kcal',
         );
     }
