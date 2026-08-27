@@ -252,7 +252,27 @@ class Runner
             ->values()
             ->all();
 
-        $messages[] = ['role' => 'user', 'content' => $question];
+        /*
+         * La domanda di questo turno è GIÀ una riga in tabella: la pagina la
+         * scrive prima di mettere il lavoro in coda, ed è a stato «done»,
+         * quindi la storia qui sopra la comprende.
+         *
+         * Senza questo controllo finiva nel prompt due volte — una dalla
+         * storia e una appesa in fondo — e il modello si trovava davanti due
+         * messaggi dell'utente identici di fila. Il 26/08 se n'è accorto e
+         * l'ha scritto in chat ("la tua chat mi è arrivata due volte"); prima
+         * di allora era passata inosservata, che è la parte peggiore: un
+         * doppione così non rompe niente, sposta solo le probabilità verso il
+         * fare la cosa due volte.
+         *
+         * Resta appesa quando non c'è (chiamate diverse da quella della
+         * pagina, per esempio dai test), così `run()` funziona da sola.
+         */
+        $ultimo = end($messages) ?: null;
+
+        if ($ultimo === null || $ultimo['role'] !== 'user' || $ultimo['content'] !== $question) {
+            $messages[] = ['role' => 'user', 'content' => $question];
+        }
 
         return $messages;
     }

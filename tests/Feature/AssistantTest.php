@@ -370,3 +370,36 @@ it('sposta il segnaposto di cache invece di accumularne uno per giro', function 
         ->and($puliti[1]['content'][1]['content'])->toBe('b')
         ->and($puliti[0]['content'])->toBe('domanda');
 });
+
+/*
+ * La domanda non deve arrivare al modello due volte.
+ *
+ * La pagina scrive la riga dell'utente e POI mette in coda il lavoro, quindi
+ * quando il turno parte la domanda è già dentro la storia. Appenderla di nuovo
+ * metteva due messaggi identici di fila: non rompe niente, e proprio per
+ * questo era passata inosservata finché il modello non l'ha fatto notare in
+ * chat.
+ */
+it('non manda al modello due volte la stessa domanda', function () {
+    AssistantMessage::create(['topic' => 'health', 'role' => 'user', 'content' => 'ieri ho corso', 'status' => 'done']);
+
+    $runner = new Runner('x', 'y');
+    $m = (new ReflectionClass($runner))->getMethod('history');
+    $m->setAccessible(true);
+
+    $messaggi = $m->invoke($runner, 'ieri ho corso', Topic::Health);
+
+    expect($messaggi)->toHaveCount(1)
+        ->and($messaggi[0])->toBe(['role' => 'user', 'content' => 'ieri ho corso']);
+});
+
+it('appende la domanda quando non è già in tabella', function () {
+    $runner = new Runner('x', 'y');
+    $m = (new ReflectionClass($runner))->getMethod('history');
+    $m->setAccessible(true);
+
+    // Chiamata fuori dalla pagina: qui la riga non c'è, e senza l'append il
+    // modello riceverebbe un prompt senza domanda dentro.
+    expect($m->invoke($runner, 'quanto ho speso?', Topic::Finance))
+        ->toBe([['role' => 'user', 'content' => 'quanto ho speso?']]);
+});

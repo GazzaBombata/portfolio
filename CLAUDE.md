@@ -146,6 +146,11 @@ strani.
   menu, senza essere accesi. La scelta viene registrata su ogni risposta
   (`assistant_messages.model`): se una risposta è secca o sbagliata, la prima
   domanda utile è su quale modello girava.
+- **La pagina scrive la domanda in tabella e POI mette in coda il turno**, e
+  la storia che il modello riceve la comprende già: `Runner::history()` non
+  deve appenderla una seconda volta. È stato un bug per giorni senza rompere
+  niente — due messaggi identici di fila spostano solo le probabilità verso il
+  fare la cosa due volte — finché il modello non l'ha scritto in chat.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.
