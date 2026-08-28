@@ -55,7 +55,7 @@ class Gaps
             $mancano[] = 'peso';
         }
 
-        if (! Workout::query()->whereDate('performed_on', $giorno)->exists()) {
+        if (! Workout::query()->done()->whereDate('performed_on', $giorno)->exists()) {
             $mancano[] = 'allenamenti';
         }
 
@@ -85,7 +85,7 @@ class Gaps
             $mancano[] = 'pasti previsti';
         }
 
-        if (! Workout::query()->whereDate('performed_on', $giorno)->exists()) {
+        if (! Workout::query()->planned()->whereDate('performed_on', $giorno)->exists()) {
             $mancano[] = 'allenamenti in programma';
         }
 

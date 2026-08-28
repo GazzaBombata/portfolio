@@ -28,7 +28,7 @@ class HealthOverview extends StatsOverviewWidget
         $da = now()->subDays(6)->startOfDay();
 
         $notti = SleepLog::query()->where('night_of', '>=', $da)->whereNotNull('minutes')->get();
-        $allenamenti = Workout::query()->where('performed_on', '>=', $da)->get();
+        $allenamenti = Workout::query()->done()->where('performed_on', '>=', $da)->get();
         $giornate = DailyLog::query()->where('logged_on', '>=', $da)->get();
         $peso = BodyMetric::query()->whereNotNull('weight_kg')->orderByDesc('measured_on')->first();
 

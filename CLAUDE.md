@@ -107,6 +107,32 @@ strani.
   altrimenti quello di partenza continuerebbe a contare calorie di qualcosa che
   non c'è più. Un bilancio aggiornato solo quando qualcuno si ricorda di
   chiederlo è peggio di nessun bilancio: sembra aggiornato.
+- **Una seduta è UNA riga, con gli esercizi dentro** (`workout_exercises`).
+  Prima serie, ripetizioni e carico erano tre colonne sulla seduta: un posto
+  solo per una palestra che di esercizi ne ha cinque. Restavano due strade e
+  sbagliavano entrambe — una riga sola perdeva i carichi, cinque righe li
+  tenevano ma facevano contare **cinque volte** le calorie della stessa ora,
+  perché `activityBurn()` somma MET per minuti riga per riga. Da qui viene
+  l'unica cosa che un allenatore guarda: come si muove un carico nel tempo. Le
+  vecchie colonne sono state travasate in un esercizio solo e poi **tolte** —
+  tenerle «per compatibilità» avrebbe lasciato due posti per la stessa cosa, con
+  il form a scrivere in uno e il consulente a leggere l'altro.
+- **Gli allenamenti hanno previsto e fatto** (`workouts.kind`), gemello di
+  `meals.kind`, e **ogni conto calorico deve filtrare `done()`**. Una seduta in
+  programma per giovedì non ha bruciato niente: contarla annuncia un margine
+  guadagnato con un allenamento che non è ancora stato fatto, e il numero resta
+  plausibile. Vale anche per la progressione — `storico_esercizi` guarda solo le
+  sedute fatte, altrimenti misurerebbe le intenzioni e sarebbe sempre in
+  crescita.
+- **Ma non è il gemello perfetto dei pasti, e la differenza è `authored_by`.**
+  Il piano alimentare viene da fuori: lo scrive un nutrizionista e l'assistente
+  lo trascrive. La scheda di allenamento no — lì l'allenatore è l'assistente
+  stesso, quindi **propone e aspetta l'ok** (la stessa regola che vale per
+  creare una categoria di spesa) e quello che scrive resta marcato come suo.
+  Fra un mese «l'ho deciso io» e «me l'ha proposto un modello» non si
+  ricostruiscono a memoria, ed è la differenza che serve proprio quando si
+  guarda indietro per capire cosa ha funzionato. Una seduta **già fatta** non
+  può essere attribuita all'assistente: il consuntivo lo racconta una persona.
 - **Lo sport si somma al fabbisogno, non si nasconde in un fattore.** Un
   `activity_factor` alto darebbe lo stesso fabbisogno a una settimana ferma e a
   una di allenamenti — cioè cancellerebbe la differenza che si vuole vedere.
@@ -116,7 +142,7 @@ strani.
   strumenti (2.438 token) più il prompt, non la conversazione — che era già
   tagliata a dodici messaggi. Un consulente che non può toccare i pasti non ha
   motivo di portarsi dietro come si registrano. Chat spese: 4 strumenti. Chat
-  salute: 12.
+  salute: 13.
 - **Il prompt di sistema è spezzato in due blocchi**: uno statico (istruzioni e
   regole del dominio) marcato `cacheControl`, uno variabile (la data di oggi,
   il profilo, le categorie). L'ordine in cui l'API costruisce il prompt è

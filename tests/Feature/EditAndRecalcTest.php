@@ -113,7 +113,7 @@ it('elenca pasti e allenamenti con il loro id, per poterli correggere', function
     $esito = (new SearchRecordsTool)->run(['dal' => now()->toDateString()]);
 
     expect($esito->content)->toContain('PASTO #')
-        ->and($esito->content)->toContain('ALLENAMENTO #')
+        ->and($esito->content)->toContain('SEDUTA #')
         ->and($esito->content)->toContain('Pesce')
         ->and($esito->content)->toContain('Nuoto');
 });

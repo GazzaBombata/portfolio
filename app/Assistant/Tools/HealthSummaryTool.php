@@ -42,7 +42,7 @@ class HealthSummaryTool implements Tool
         $al = CarbonImmutable::parse($input['al'])->toDateString();
 
         $notti = SleepLog::query()->whereBetween('night_of', [$dal, $al])->orderBy('night_of')->get();
-        $allenamenti = Workout::query()->whereBetween('performed_on', [$dal, $al])->orderBy('performed_on')->get();
+        $allenamenti = Workout::query()->done()->whereBetween('performed_on', [$dal, $al])->orderBy('performed_on')->get();
         $pasti = Meal::query()->eaten()->whereBetween('eaten_on', [$dal, $al])->orderBy('eaten_on')->get();
         $giornate = DailyLog::query()->whereBetween('logged_on', [$dal, $al])->orderBy('logged_on')->get();
         $pesi = BodyMetric::query()->whereBetween('measured_on', [$dal, $al])->orderBy('measured_on')->get();

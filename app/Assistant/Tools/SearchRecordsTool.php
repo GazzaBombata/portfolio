@@ -24,7 +24,7 @@ class SearchRecordsTool implements Tool
 
     public function description(): string
     {
-        return 'Elenca pasti e allenamenti registrati in un intervallo, con il loro id. Usalo prima di modifica_pasto o modifica_allenamento.';
+        return 'Elenca pasti e sedute di un intervallo, con il loro id e gli esercizi. Usalo prima di modifica_pasto o modifica_allenamento.';
     }
 
     public function schema(): array
@@ -45,7 +45,7 @@ class SearchRecordsTool implements Tool
         $al = isset($input['al']) ? CarbonImmutable::parse($input['al'])->toDateString() : $dal;
 
         $pasti = Meal::query()->whereBetween('eaten_on', [$dal, $al])->orderBy('eaten_on')->get();
-        $allenamenti = Workout::query()->whereBetween('performed_on', [$dal, $al])->orderBy('performed_on')->get();
+        $allenamenti = Workout::query()->with('exercises')->whereBetween('performed_on', [$dal, $al])->orderBy('performed_on')->get();
 
         if ($pasti->isEmpty() && $allenamenti->isEmpty()) {
             return ToolResult::ok("Nessuna registrazione fra il {$dal} e il {$al}.", 'niente trovato');
@@ -63,10 +63,16 @@ class SearchRecordsTool implements Tool
         }
 
         foreach ($allenamenti as $w) {
-            $righe[] = sprintf('ALLENAMENTO #%d | %s | %s%s%s',
+            $righe[] = sprintf('%s #%d | %s | %s%s%s%s',
+                $w->kind === 'planned' ? 'SEDUTA IN PROGRAMMA' : 'SEDUTA',
                 $w->id, $w->performed_on->format('d/m/Y'), $w->activity,
                 $w->minutes ? " | {$w->minutes} min" : '',
-                $w->calories ? " | {$w->calories} kcal" : '');
+                $w->calories ? " | {$w->calories} kcal" : '',
+                $w->proposedByAssistant() ? ' | scheda proposta da te' : '');
+
+            foreach ($w->exercises as $e) {
+                $righe[] = '    · '.$e->summary();
+            }
         }
 
         return ToolResult::ok(implode("\n", $righe), count($righe).' registrazioni');

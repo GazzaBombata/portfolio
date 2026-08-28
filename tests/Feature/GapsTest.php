@@ -31,7 +31,7 @@ function giornataCompleta(CarbonImmutable $oggi): void
     DailyLog::create(['logged_on' => $oggi, 'steps' => 8000, 'water_litres' => 2.0]);
     SleepLog::create(['night_of' => $oggi->subDay(), 'minutes' => 450]);
     BodyMetric::create(['measured_on' => $oggi, 'weight_kg' => 80.0]);
-    Workout::create(['performed_on' => $oggi, 'activity' => 'cyclette', 'minutes' => 30]);
+    Workout::create(['kind' => 'done', 'performed_on' => $oggi, 'activity' => 'cyclette', 'minutes' => 30]);
     Meal::create(['kind' => 'planned', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 600]);
     Meal::create(['kind' => 'eaten', 'eaten_on' => $oggi, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 600]);
 }
@@ -102,9 +102,21 @@ it('a domani chiede solo le decisioni', function () {
 
 it('non chiede a domani niente di già deciso', function () {
     Meal::create(['kind' => 'planned', 'eaten_on' => $this->domani, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 600]);
-    Workout::create(['performed_on' => $this->domani, 'activity' => 'cyclette', 'minutes' => 30]);
+    Workout::create(['kind' => 'planned', 'performed_on' => $this->domani, 'activity' => 'cyclette', 'minutes' => 30]);
 
     expect(Gaps::tomorrow($this->domani))->toBe([]);
+});
+
+/*
+ * Una seduta di domani segnata come FATTA non è un programma: è un errore di
+ * registrazione. Contarla come piano fatto smetterebbe di chiedere la cosa che
+ * manca davvero, e in più quel giorno il fabbisogno conterebbe calorie che
+ * nessuno ha ancora bruciato.
+ */
+it('non scambia per programma una seduta di domani segnata come fatta', function () {
+    Workout::create(['kind' => 'done', 'performed_on' => $this->domani, 'activity' => 'cyclette', 'minutes' => 30]);
+
+    expect(Gaps::tomorrow($this->domani))->toContain('allenamenti in programma');
 });
 
 it('scrive una riga sola con i due giorni', function () {
@@ -122,7 +134,7 @@ it('scrive una riga sola con i due giorni', function () {
 it('dice esplicitamente quando non c\'è niente da ricordare', function () {
     giornataCompleta($this->oggi);
     Meal::create(['kind' => 'planned', 'eaten_on' => $this->domani, 'moment' => 'lunch', 'description' => 'riso', 'calories' => 600]);
-    Workout::create(['performed_on' => $this->domani, 'activity' => 'cyclette', 'minutes' => 30]);
+    Workout::create(['kind' => 'planned', 'performed_on' => $this->domani, 'activity' => 'cyclette', 'minutes' => 30]);
 
     expect(Gaps::line($this->oggi))->toBe('Da completare: niente, oggi e domani sono a posto. Non ricordargli nulla.');
 });

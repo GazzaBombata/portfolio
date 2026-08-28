@@ -123,7 +123,7 @@ class Energy
 
         $totale = 0.0;
 
-        foreach (Workout::query()->whereDate('performed_on', $day)->get() as $workout) {
+        foreach (Workout::query()->done()->whereDate('performed_on', $day)->get() as $workout) {
             // Se le calorie sono state registrate, si usano quelle: chi le ha
             // scritte guardava un cardiofrequenzimetro, non una tabella.
             if ($workout->calories !== null) {
@@ -199,6 +199,7 @@ class Energy
         }
 
         return Workout::query()
+            ->done()
             ->whereDate('performed_on', $day)
             ->get()
             ->filter(function (Workout $w): bool {

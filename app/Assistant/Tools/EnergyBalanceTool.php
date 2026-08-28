@@ -131,7 +131,7 @@ class EnergyBalanceTool implements Tool
             ? "- Mangiate: {$assunte} kcal, da ".Meal::query()->eaten()->whereDate('eaten_on', $giorno)->count().' pasti registrati'
             : '- Mangiate: nessuna caloria registrata (i pasti potrebbero esserci senza i valori nutrizionali)';
 
-        $allenamenti = Workout::query()->whereDate('performed_on', $giorno)->get();
+        $allenamenti = Workout::query()->done()->whereDate('performed_on', $giorno)->get();
         $righe[] = $allenamenti->isEmpty()
             ? '- Attività: nessuna registrata'
             : "- Attività: {$bruciate} kcal da ".$allenamenti->pluck('activity')->implode(', ');
