@@ -37,16 +37,30 @@ function fidati(User $user, ?callable $tocca = null): string
     return $token;
 }
 
+/**
+ * La domanda che il login si fa: «devo chiedere il codice a questo accesso?».
+ *
+ * Va posta con la stessa delimitazione che usa la pagina di login, perché
+ * fuori da lì `isEnabled()` vuol dire un'altra cosa — vedi
+ * App\Auth\RememberedAppAuthentication.
+ */
+function chiedeIlCodice(User $user): bool
+{
+    return RememberedAppAuthentication::whileDecidingTheChallenge(
+        fn (): bool => RememberedAppAuthentication::make()->isEnabled($user),
+    );
+}
+
 it('salta la sfida sul dispositivo che ha già superato il codice', function () {
     $token = fidati($this->user);
 
     request()->cookies->set(TrustedDevices::COOKIE, $token);
 
-    expect(RememberedAppAuthentication::make()->isEnabled($this->user))->toBeFalse();
+    expect(chiedeIlCodice($this->user))->toBeFalse();
 });
 
 it('chiede il codice quando il cookie non c\'è', function () {
-    expect(RememberedAppAuthentication::make()->isEnabled($this->user))->toBeTrue();
+    expect(chiedeIlCodice($this->user))->toBeTrue();
 });
 
 it('chiede il codice quando la settimana è finita', function () {
@@ -54,7 +68,7 @@ it('chiede il codice quando la settimana è finita', function () {
 
     request()->cookies->set(TrustedDevices::COOKIE, $token);
 
-    expect(RememberedAppAuthentication::make()->isEnabled($this->user))->toBeTrue();
+    expect(chiedeIlCodice($this->user))->toBeTrue();
 });
 
 /*
@@ -68,7 +82,7 @@ it('non lascia che il dispositivo di una persona valga per un\'altra', function 
 
     request()->cookies->set(TrustedDevices::COOKIE, $token);
 
-    expect(RememberedAppAuthentication::make()->isEnabled($altra))->toBeTrue();
+    expect(chiedeIlCodice($altra))->toBeTrue();
 });
 
 it('non tiene il token in chiaro nel database', function () {
@@ -112,5 +126,34 @@ it('resta obbligatorio per chi non ha mai configurato il secondo fattore', funct
     request()->cookies->set(TrustedDevices::COOKIE, $token);
 
     // Il cookie non deve poter sostituire una configurazione che non c'è.
-    expect(RememberedAppAuthentication::make()->isEnabled($senza))->toBeFalse();
+    expect(chiedeIlCodice($senza))->toBeFalse();
+});
+
+/*
+ * Il bug arrivato in produzione il 28/08/2026: sul dispositivo fidato il
+ * pannello chiedeva di CONFIGURARE il secondo fattore, non di digitarlo.
+ *
+ * `isEnabled()` risponde a due domande — «faccio la sfida?» al login e «ce
+ * l'ha configurato?» al middleware — e saltare la sfida rispondendo no le
+ * cancellava tutte e due. Questo test fa la seconda domanda dove la fa
+ * Filament: una richiesta al pannello, con il cookie addosso.
+ */
+it('non manda a riconfigurare il secondo fattore chi ha il dispositivo fidato', function () {
+    $token = fidati($this->user);
+
+    $this->actingAs($this->user)
+        ->withCookie(TrustedDevices::COOKIE, $token)
+        ->get('/admin')
+        ->assertOk();
+});
+
+/* E chi non l'ha mai configurato ci va lo stesso, cookie o no. */
+it('manda a configurare il secondo fattore anche con un cookie in mano', function () {
+    $senza = User::factory()->create(['app_authentication_secret' => null]);
+    $token = fidati($senza);
+
+    $this->actingAs($senza)
+        ->withCookie(TrustedDevices::COOKIE, $token)
+        ->get('/admin')
+        ->assertRedirect('/admin/multi-factor-authentication/set-up');
 });

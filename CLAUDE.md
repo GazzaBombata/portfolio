@@ -167,6 +167,16 @@ strani.
   giorni. La scadenza non è scorrevole, il token in tabella è solo un'impronta,
   la fiducia è legata all'utente, e dal profilo si revoca tutto in un clic —
   che è l'unico modo di chiudere la finestra quando un portatile si perde.
+
+  **`isEnabled()` di Filament risponde a due domande diverse**: «faccio la
+  sfida adesso?» al login, e «questa persona il secondo fattore ce l'ha
+  configurato?» al middleware, alla pagina di configurazione obbligatoria e al
+  profilo. Rispondere «no» per saltare la sfida le cancellava tutte e due: in
+  produzione il pannello concludeva che il secondo fattore non c'era e
+  rimandava a **configurarlo**, cioè offriva un QR nuovo a chi il segreto ce
+  l'aveva già. Il dispositivo fidato vale come sfida superata solo dentro
+  `whileDecidingTheChallenge()`, che la pagina di login mette attorno alla
+  decisione; fuori di lì la risposta è la verità.
 - **Il link alla dashboard sotto una risposta lo mette la pagina, non il
   modello** (`Topic::writingTools()`), e solo dove uno strumento che scrive è
   stato davvero eseguito. Un indirizzo generato a parole si paga in token a
