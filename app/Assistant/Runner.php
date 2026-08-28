@@ -6,9 +6,11 @@ use Anthropic\Client;
 use App\Ai\Budget;
 use App\Ai\Pricing;
 use App\Health\Energy;
+use App\Health\Gaps;
 use App\Models\AssistantMessage;
 use App\Models\BodyMetric;
 use App\Models\Category;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
@@ -362,6 +364,19 @@ class Runner
         if ($topic === Topic::Finance) {
             $righe[] = 'Categorie disponibili: '
                 .Category::query()->orderBy('name')->pluck('name')->implode(', ');
+        }
+
+        /*
+         * I buchi di oggi e domani, contati qui e non dedotti dal modello.
+         *
+         * Un promemoria si legge finché è vero: uno inventato — o uno che
+         * chiede quello che è già stato registrato — insegna a saltarli tutti,
+         * e allora tanto valeva non averli. Sta nel blocco variabile perché
+         * cambia a ogni registrazione: davanti al punto di cache la
+         * annullerebbe a ogni turno.
+         */
+        if ($topic === Topic::Health) {
+            $righe[] = Gaps::line(CarbonImmutable::now());
         }
 
         return implode(' ', $righe);

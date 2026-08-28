@@ -177,6 +177,19 @@ strani.
   l'aveva già. Il dispositivo fidato vale come sfida superata solo dentro
   `whileDecidingTheChallenge()`, che la pagina di login mette attorno alla
   decisione; fuori di lì la risposta è la verità.
+- **I buchi di oggi e domani li conta il codice, non il modello**
+  (`App\Health\Gaps`). A regime una giornata ha dentro passi, acqua, sonno,
+  peso, allenamenti, pasti previsti e pasti mangiati con i loro valori
+  nutrizionali; di domani servono le decisioni — il piano e gli allenamenti in
+  programma — non i consuntivi, che per domani non esistono. L'elenco entra nel
+  blocco variabile del prompt salute e l'assistente lo ricorda in una riga in
+  fondo alla risposta, finché non gli si dice di lasciar perdere. Contarli qui
+  invece di farli dedurre da un riepilogo è la stessa scelta del link alla
+  dashboard: un promemoria si legge finché è vero, e uno che chiede quello che
+  è già registrato insegna a saltarli tutti. **Un buco non è un errore** — un
+  giorno senza allenamento può essere riposo, una cena non registrata può
+  essere una cena saltata — quindi si chiede, non si corregge, e non si
+  registra mai niente per riempirlo.
 - **Il link alla dashboard sotto una risposta lo mette la pagina, non il
   modello** (`Topic::writingTools()`), e solo dove uno strumento che scrive è
   stato davvero eseguito. Un indirizzo generato a parole si paga in token a
