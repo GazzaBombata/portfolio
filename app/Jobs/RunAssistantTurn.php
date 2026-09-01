@@ -68,6 +68,10 @@ class RunAssistantTurn implements ShouldQueue
                 'content' => $esito['content'],
                 'steps' => $esito['steps'],
                 'status' => ($esito['stopped'] ?? false) ? 'stopped' : 'done',
+                // Segna i turni finiti contro il tetto dei giri: da quando la
+                // risposta la scrive il modello, dal testo non si riconoscono
+                // più.
+                'out_of_rounds' => $esito['outOfRounds'] ?? false,
             ]);
         } catch (Throwable $e) {
             AssistantMessage::query()->whereKey($this->messageId)->update([

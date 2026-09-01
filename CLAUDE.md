@@ -245,6 +245,30 @@ strani.
   deve appenderla una seconda volta. È stato un bug per giorni senza rompere
   niente — due messaggi identici di fila spostano solo le probabilità verso il
   fare la cosa due volte — finché il modello non l'ha scritto in chat.
+- **A fine giri si dà conto, non si promette.** Il ciclo degli strumenti ha un
+  tetto di sei giri. Quando li esaurisce, il turno fa un'ultima chiamata
+  **senza strumenti**: l'unica cosa che il modello può fare è parlare di quello
+  che ha già in mano, che è esattamente ciò che serve. Prima c'era una frase
+  fissa che diceva «ecco cosa ho raccolto» e poi non raccontava niente — i
+  risultati erano tutti in `$messages`, bastava farli leggere. Sopra restavano
+  le pastiglie degli strumenti, che dicono cosa ha *guardato* e non cosa ha
+  *trovato*. È lo stesso bug che Personal Ticketing ha corretto il 25/08/2026
+  (`f4d2a70`), dove su conversazioni vere costava turni interi rifatti da zero.
+- **E un «sì» riprende, invece di ricominciare** (`App\Assistant\ResumeNotes`).
+  Di un turno in tabella sopravvivono il testo e i nomi degli strumenti; i
+  RISULTATI no. Quindi approvare un «vuoi che continui?» senza appunti rifà le
+  stesse ricerche che avevano già esaurito i sei giri, e sbatte contro il tetto
+  una seconda volta. Gli appunti stanno in cache — sono appunti di lavoro, non
+  la conversazione — scadono in mezz'ora, non si salvano oltre i 200.000
+  caratteri e si riprende al massimo due volte. Il riconoscimento del «sì» è
+  volutamente strettissimo: sbagliare per eccesso vuol dire rispondere a una
+  domanda che non è stata fatta, sbagliare per difetto costa una ricerca
+  rifatta.
+- **`assistant_messages.out_of_rounds` segna i turni che hanno colpito il
+  tetto.** Finché la risposta era una frase fissa bastava un `like` sul
+  contenuto; adesso la scrive il modello ed è diversa ogni volta. Senza quella
+  colonna non si saprebbe più quanto spesso sei giri non bastano — cioè il
+  numero che dice se il tetto va alzato o se le domande vanno strette.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.

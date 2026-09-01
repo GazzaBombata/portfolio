@@ -29,6 +29,25 @@ class Runner
     private const MAX_ROUNDS = 6;
 
     /**
+     * Cosa gli si chiede quando i giri sono finiti.
+     *
+     * Arriva come messaggio dell'utente e non come istruzione di sistema
+     * perché è l'ultima cosa che legge, e da lì risponde. Le tre richieste
+     * sono in ordine di utilità: prima cosa hai trovato, poi cosa manca, poi
+     * il permesso — un «vado avanti?» senza il resoconto davanti è la domanda
+     * a cui nessuno sa rispondere.
+     */
+    private const CHIUSURA = <<<'TXT'
+    Non hai altri passaggi disponibili e NON puoi cercare altro adesso.
+
+    Scrivi ORA quello che hai raccolto finora, per esteso e in modo utilizzabile: non elencare gli strumenti che hai usato, riporta quello che hai TROVATO, con i numeri che hai già letto. Se hai registrato o modificato qualcosa, dillo: resta scritto.
+
+    Poi di' apertamente cosa non sei riuscito a controllare. Se per rispondere davvero mancano ancora dei passaggi, chiudi chiedendo se vuole che tu continui, dicendo con precisione da dove riprenderesti.
+
+    Non inventare quello che avresti trovato: parla solo di quello che gli strumenti ti hanno già risposto. Se non hai trovato niente di utile, dillo invece di riempire.
+    TXT;
+
+    /**
      * L'assistente che dice, in prima persona, di aver appena registrato o
      * cambiato qualcosa.
      *
@@ -67,8 +86,28 @@ class Runner
         $client = new Client(apiKey: $this->apiKey);
         $registry = $this->tools($topic);
         $schemas = $this->schemas($registry);
-        $messages = $this->history($question, $topic);
-        $steps = [];
+        /*
+         * «Sì, continua» riparte da dove si era rimasti.
+         *
+         * Senza, un turno finito contro il tetto e approvato rifà tutte le
+         * ricerche da capo — le stesse che avevano già esaurito sei giri —
+         * e sbatte contro il tetto una seconda volta. Gli appunti hanno i
+         * risultati degli strumenti, che dalla tabella non si recuperano.
+         */
+        $ripresa = ResumeNotes::soundsLikeYes($question) ? ResumeNotes::take($topic) : null;
+
+        if ($ripresa === null) {
+            // Una domanda nuova archivia la ricerca vecchia: riprenderla dopo
+            // vorrebbe dire rispondere a qualcosa che non è stato chiesto.
+            ResumeNotes::forget($topic);
+        }
+
+        $messages = $ripresa === null
+            ? $this->history($question, $topic)
+            : [...$ripresa['messages'], ['role' => 'user', 'content' => $question]];
+
+        $steps = $ripresa['steps'] ?? [];
+        $riprese = $ripresa['riprese'] ?? 0;
 
         for ($round = 0; $round < self::MAX_ROUNDS; $round++) {
             /*
@@ -182,10 +221,125 @@ class Runner
             $messages[] = ['role' => 'user', 'content' => $risultati];
         }
 
-        return [
-            'content' => 'Ho fatto parecchi passaggi senza arrivare in fondo. Ecco cosa ho raccolto: dimmi tu come procedere.',
-            'steps' => $steps,
-        ];
+        return $this->resoconto($client, $model, $topic, $messages, $steps, $registry, $riprese);
+    }
+
+    /**
+     * Il turno è finito i giri: si dà conto di quello che si è trovato.
+     *
+     * Prima qui c'era una frase fissa che diceva «ecco cosa ho raccolto» e poi
+     * non raccontava niente. I risultati degli strumenti erano tutti in
+     * `$messages` — bastava farli leggere — ma nessuno lo faceva, quindi la
+     * risposta prometteva un resoconto e ne consegnava zero. Sopra restavano le
+     * pastiglie con i nomi degli strumenti, che dicono quali sono stati usati,
+     * non cosa hanno risposto.
+     *
+     * Una chiamata in più, **senza strumenti**: è il punto. Ripassarglieli
+     * vorrebbe dire che il tetto non è un tetto — ne chiamerebbe un altro e si
+     * ricomincerebbe da capo. Senza, l'unica cosa che può fare è parlare di
+     * quello che ha già in mano.
+     *
+     * Costa un giro in più, ma solo nel caso raro in cui i sei non sono
+     * bastati; e comunque meno di una domanda rifatta da zero, che è quello
+     * che una persona fa quando non riceve risposta.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     * @param  array<int, array{tool: string, summary: ?string}>  $steps
+     * @param  array<string, Tool>  $registry
+     * @return array<string, mixed>
+     */
+    private function resoconto(
+        Client $client,
+        string $model,
+        Topic $topic,
+        array $messages,
+        array $steps,
+        array $registry,
+        int $riprese = 0,
+    ): array {
+        $messages = $this->messaggiDiChiusura($messages);
+
+        try {
+            Budget::guard();
+
+            $response = $client->messages->create(
+                model: $model,
+                maxTokens: 2048,
+                system: $this->systemBlocks($topic),
+                messages: $messages,
+            );
+
+            Budget::record('assistente', $model, $response->usage);
+
+            $testo = '';
+
+            foreach ($response->content as $block) {
+                if ($block->type === 'text') {
+                    $testo .= $block->text;
+                }
+            }
+
+            $testo = trim($testo);
+        } catch (Throwable) {
+            // Il tetto di spesa, la rete, l'API. Se anche il resoconto non
+            // riesce, quello che è stato fatto va detto lo stesso: sparire
+            // dopo aver eseguito degli strumenti è la cosa peggiore.
+            $testo = '';
+        }
+
+        /*
+         * Gli appunti si salvano solo se il resoconto è uscito: senza, non c'è
+         * stata nessuna domanda «vuoi che continui?» a cui un «sì» possa
+         * rispondere.
+         */
+        if ($testo !== '') {
+            ResumeNotes::remember($topic, [...$messages, ['role' => 'assistant', 'content' => $testo]], $steps, $riprese);
+        }
+
+        return $this->esitoResoconto($testo, $steps, $registry) + ['outOfRounds' => true];
+    }
+
+    /**
+     * La chiusura del turno, dato quello che il modello è riuscito a dire.
+     *
+     * Sta a parte dalla chiamata perché la chiamata non è provabile — il
+     * servizio dell'SDK è `final`, quindi non si sostituisce — mentre questa
+     * decisione sì, ed è quella che sbagliava: a testo vuoto bisogna dirlo,
+     * non promettere un resoconto che non c'è.
+     *
+     * @param  array<int, array{tool: string, summary: ?string}>  $steps
+     * @param  array<string, Tool>  $registry
+     * @return array<string, mixed>
+     */
+    private function esitoResoconto(string $testo, array $steps, array $registry): array
+    {
+        if (trim($testo) === '') {
+            // Sparire dopo aver eseguito degli strumenti è la cosa peggiore:
+            // quello che è stato scritto resta scritto, e va detto.
+            return [
+                'content' => 'Ho fatto '.self::MAX_ROUNDS.' passaggi senza arrivare in fondo, e non sono riuscito nemmeno a riassumerteli. '
+                    .($steps === []
+                        ? 'Non avevo ancora eseguito niente.'
+                        : 'Qui sopra vedi cosa ho eseguito: quello che ha scritto qualcosa resta scritto.')
+                    .' Dimmi tu come procedere.',
+                'steps' => $steps,
+            ];
+        }
+
+        return ['content' => $this->checked(trim($testo), $steps, $registry), 'steps' => $steps];
+    }
+
+    /**
+     * La storia, più la richiesta di tirare le somme.
+     *
+     * @param  array<int, array<string, mixed>>  $messages
+     * @return array<int, array<string, mixed>>
+     */
+    private function messaggiDiChiusura(array $messages): array
+    {
+        $messages[] = ['role' => 'user', 'content' => self::CHIUSURA];
+
+        return $messages;
     }
 
     /**

@@ -10,10 +10,10 @@ class AssistantMessage extends Model
 {
     use BelongsToUser, HasFactory;
 
-    protected $fillable = ['topic', 'model', 'role', 'content', 'steps', 'status'];
+    protected $fillable = ['topic', 'model', 'role', 'content', 'steps', 'status', 'out_of_rounds'];
 
     protected function casts(): array
     {
-        return ['steps' => 'array'];
+        return ['steps' => 'array', 'out_of_rounds' => 'boolean'];
     }
 }
