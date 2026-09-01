@@ -1,5 +1,6 @@
 <?php
 
+use App\Assistant\Tools\LogDailyTool;
 use App\Filament\Resources\Meals\Pages\ListMeals;
 use App\Filament\Resources\SleepLogs\Pages\ListSleepLogs;
 use App\Filament\Resources\Workouts\Pages\ListWorkouts;
@@ -160,4 +161,27 @@ it('non inventa i dati mancanti del giorno con il solo peso', function () {
 
     expect(BodyMetric::firstWhere('measured_on', '2026-08-16'))->not->toBeNull()
         ->and(DailyLog::firstWhere('logged_on', '2026-08-16'))->toBeNull();
+});
+
+/*
+ * I passi entrano nel fabbisogno, `Gaps` li elenca fra le cose che mancano
+ * tutti i giorni e il prompt ordina di ricordarli — ma lo strumento non aveva
+ * il campo, quindi dettarli in chat non si poteva. Un promemoria che si ripete
+ * su una cosa irrisolvibile insegna a saltare tutti i promemoria.
+ */
+it('registra i passi dettati in chat', function () {
+    $esito = (new LogDailyTool)->run(['giorno' => '2026-08-31', 'passi' => 9250]);
+
+    expect(DailyLog::sole()->steps)->toBe(9250)
+        ->and($esito->content)->toContain('9.250 passi');
+});
+
+it('aggiorna i passi senza cancellare l\'acqua già registrata', function () {
+    (new LogDailyTool)->run(['giorno' => '2026-08-31', 'acqua_litri' => 2.0]);
+    (new LogDailyTool)->run(['giorno' => '2026-08-31', 'passi' => 9250]);
+
+    $log = DailyLog::sole();
+
+    expect($log->steps)->toBe(9250)
+        ->and((float) $log->water_litres)->toBe(2.0);
 });
