@@ -20,6 +20,14 @@ beforeEach(function () {
     $this->actingAs($this->user);
     BodyMetric::create(['measured_on' => now()->subDays(30), 'weight_kg' => 80.0]);
 
+    /*
+     * Il tempo sta fermo: lo storico dice «fermo a 60 kg da 21 giorni», e
+     * quel numero è la distanza dall'oggi vero. Senza congelarlo il test
+     * passa il giorno in cui lo scrivi e fallisce due giorni dopo, che è il
+     * modo peggiore di avere un test — sembra una regressione e non lo è.
+     */
+    $this->travelTo(CarbonImmutable::parse('2026-08-28 10:00'));
+
     $this->giorno = CarbonImmutable::parse('2026-08-28');
 });
 
