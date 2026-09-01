@@ -16,7 +16,7 @@ class CreateCategoryTool implements ChangesSomething, Tool
 
     public function description(): string
     {
-        return 'Crea una categoria di spesa o di entrata, se davvero non ne esiste già una adatta. Usala solo quando Giorgio te lo chiede o approva esplicitamente: le categorie sono il modo in cui legge i suoi soldi, e crearne troppe le rende inutili.';
+        return 'Crea una categoria di spesa o di entrata, se davvero non ne esiste già una adatta. Usala solo quando te lo viene chiesto o approvato esplicitamente: le categorie sono il modo in cui legge i suoi soldi, e crearne troppe le rende inutili.';
     }
 
     public function schema(): array

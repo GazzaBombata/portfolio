@@ -10,8 +10,10 @@ use App\Health\Gaps;
 use App\Models\AssistantMessage;
 use App\Models\BodyMetric;
 use App\Models\Category;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -280,11 +282,15 @@ class Runner
     }
 
     /**
-     * Chi è la persona con cui sta parlando.
+     * I dati fisici di chi sta scrivendo.
      *
-     * Ricavato dal profilo a ogni turno, mai scritto nel prompt: un'età messa
+     * Ricavati dal profilo a ogni turno, mai scritti nel prompt: un'età messa
      * a mano è giusta il giorno in cui la scrivi, e il peso cambia. Così fra
      * dieci anni la frase è ancora vera senza che nessuno l'abbia aggiornata.
+     *
+     * Va solo nella chat salute. Il consulente delle spese non ha motivo di
+     * sapere quanto pesi: è la stessa riga che separa le due conversazioni, e
+     * qui costerebbe anche dei token a ogni domanda.
      */
     private function profilo(): string
     {
@@ -315,13 +321,62 @@ class Runner
             $parti[] = "metabolismo basale stimato {$basale} kcal";
         }
 
-        $riga = $parti === [] ? '' : 'Giorgio: '.implode(', ', $parti).'.';
+        return $parti === [] ? '' : 'Dati fisici: '.implode(', ', $parti).'.';
+    }
 
-        if (filled($user->health_notes)) {
-            $riga .= ' Da tenere presente: '.$user->health_notes;
+    /**
+     * Come chiamare chi sta scrivendo.
+     *
+     * Il prompt è impersonale, quindi il nome arriva da qui. Senza, il modello
+     * si rivolge a «l'utente», che è il tono di un modulo e non di qualcuno
+     * che ti allena.
+     */
+    private static function nome(User $user): string
+    {
+        return Str::of((string) $user->name)->trim()->explode(' ')->first() ?: 'La persona';
+    }
+
+    /**
+     * Il contesto che la persona ha scritto di suo pugno per gli assistenti.
+     *
+     * Sono istruzioni sue, non dati letti da uno strumento: gli obiettivi di
+     * peso, gli attrezzi che ha in casa, com'è fatta la sua entrata. È la
+     * ragione per cui il prompt può restare impersonale — le cose che valgono
+     * per una persona sola stanno nella sua riga, non nel codice.
+     *
+     * Quello generale va a tutti e due; gli altri due restano ciascuno nella
+     * propria conversazione, che è la stessa divisione che vale per gli
+     * strumenti.
+     *
+     * @return array<int, string>
+     */
+    private function contestoPersonale(Topic $topic): array
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            return [];
         }
 
-        return $riga;
+        $righe = [];
+
+        if (filled($user->assistant_notes)) {
+            $righe[] = 'Contesto che '.static::nome($user).' ha scritto per te: '.trim($user->assistant_notes);
+        }
+
+        $specifico = match ($topic) {
+            Topic::Health => $user->health_notes,
+            Topic::Finance => $user->finance_notes,
+        };
+
+        if (filled($specifico)) {
+            $righe[] = match ($topic) {
+                Topic::Health => 'Su salute e allenamento: '.trim($specifico),
+                Topic::Finance => 'Sulle sue finanze: '.trim($specifico),
+            };
+        }
+
+        return $righe;
     }
 
     /**
@@ -353,13 +408,20 @@ class Runner
     /** Quello che cambia da un giorno all'altro, tenuto fuori dalla cache. */
     private function contesto(Topic $topic): string
     {
+        $user = Auth::user();
+
         $righe = ['Oggi è '.now()->translatedFormat('l j F Y').'.'];
 
-        $profilo = $this->profilo();
+        if ($user !== null) {
+            $righe[] = 'Stai parlando con '.static::nome($user).'.';
+        }
 
-        if ($profilo !== '') {
+        // I dati fisici solo dove servono: alle spese non interessa il peso.
+        if ($topic === Topic::Health && ($profilo = $this->profilo()) !== '') {
             $righe[] = $profilo;
         }
+
+        $righe = array_merge($righe, $this->contestoPersonale($topic));
 
         if ($topic === Topic::Finance) {
             $righe[] = 'Categorie disponibili: '
@@ -379,7 +441,7 @@ class Runner
             $righe[] = Gaps::line(CarbonImmutable::now());
         }
 
-        return implode(' ', $righe);
+        return implode("\n", $righe);
     }
 
     /**

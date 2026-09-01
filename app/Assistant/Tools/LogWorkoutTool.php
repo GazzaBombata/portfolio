@@ -36,7 +36,7 @@ class LogWorkoutTool implements ChangesSomething, Tool
                 'proposta_da' => [
                     'type' => 'string',
                     'enum' => ['giorgio', 'te'],
-                    'description' => '«te» solo se la scheda l\'hai scritta tu e Giorgio l\'ha approvata in chat. Se te l\'ha dettata lui, è «giorgio».',
+                    'description' => '«te» solo se la scheda l\'hai scritta tu ed è stata approvata in chat. Se te l\'ha dettata la persona, è «lei».',
                 ],
                 'minuti' => ['type' => ['integer', 'null']],
                 'distanza_km' => ['type' => ['number', 'null']],
@@ -78,8 +78,8 @@ class LogWorkoutTool implements ChangesSomething, Tool
 
         if ($daAssistente && ! $prevista) {
             return ToolResult::error(
-                'Una seduta già fatta non puoi averla proposta tu: quello che è successo lo racconta Giorgio. '
-                .'Se stai registrando un allenamento fatto, proposta_da è «giorgio».',
+                'Una seduta già fatta non puoi averla proposta tu: quello che è successo lo racconta chi c\'era. '
+                .'Se stai registrando un allenamento fatto, proposta_da è «lei».',
             );
         }
 

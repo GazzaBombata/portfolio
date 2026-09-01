@@ -26,7 +26,7 @@ class WorkoutsTable
                     ->color(fn (string $state): string => $state === 'planned' ? 'warning' : 'success'),
                 TextColumn::make('authored_by')
                     ->label('Scritta da')
-                    ->formatStateUsing(fn (string $state): string => $state === 'assistant' ? 'Consulente' : 'Giorgio')
+                    ->formatStateUsing(fn (string $state): string => $state === 'assistant' ? 'Consulente' : 'Tu')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('performed_on')
                     ->date()

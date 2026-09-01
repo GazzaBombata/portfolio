@@ -136,6 +136,20 @@ strani.
 - **Lo sport si somma al fabbisogno, non si nasconde in un fattore.** Un
   `activity_factor` alto darebbe lo stesso fabbisogno a una settimana ferma e a
   una di allenamenti — cioè cancellerebbe la differenza che si vuole vedere.
+- **Il prompt non nomina nessuno, il contesto sì.** Le cose vere di una
+  persona sola — il nome, gli obiettivi di peso, gli attrezzi in garage, com'è
+  fatta l'entrata — stanno in tre colonne su `users` (`assistant_notes`,
+  `health_notes`, `finance_notes`) e le scrive lei stessa dalla pagina «Cosa
+  sanno di te». Scritte nel prompt vorrebbero dire un prompt per utente, cioè
+  ogni regola di dominio tenuta allineata in due copie — o, peggio, il secondo
+  utente che si prende addosso il profilo del primo. C'è anche un guadagno che
+  non si vede: un blocco statico uguale per tutti è lo stesso prefisso in cache
+  per tutti. Il contesto sta nel blocco **variabile**, quindi si paga per
+  intero a ogni domanda: da lì il tetto di 2.000 caratteri per campo, che sono
+  abbondanti per degli obiettivi e stretti per un incollaggio di dieci pagine.
+  Il generale lo leggono tutti e due; gli altri due restano ciascuno nella
+  propria conversazione, e nemmeno i dati fisici arrivano più alla chat delle
+  spese — quanto pesi non le serve, e lo pagherebbe a ogni domanda.
 - **Le conversazioni dell'assistente sono due, spese e salute**, e non si
   vedono fra loro. Non è una divisione di comodo: la misura su un mese d'uso
   diceva che il 65% dell'input di ogni domanda erano le definizioni dei sedici

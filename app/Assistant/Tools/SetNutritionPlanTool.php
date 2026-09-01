@@ -19,7 +19,7 @@ class SetNutritionPlanTool implements ChangesSomething, Tool
 
     public function description(): string
     {
-        return "Forza l'obiettivo calorico di un giorno a un valore deciso da Giorgio. "
+        return "Forza l'obiettivo calorico di un giorno a un valore deciso dalla persona che ti scrive. "
             ."NON SERVE per l'uso normale: se i pasti previsti del giorno sono registrati con pianifica_pasto, "
             ."l'obiettivo è già la loro somma e lo calcola il sistema da solo — non chiederglielo. "
             .'Usalo solo quando ti dà lui un numero esplicito diverso dal piano.';

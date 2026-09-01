@@ -9,7 +9,6 @@ use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -45,7 +44,7 @@ class Profile extends Page
     public function mount(): void
     {
         $this->form->fill(Auth::user()->only([
-            'birth_date', 'height_cm', 'sex', 'activity_factor', 'health_notes',
+            'birth_date', 'height_cm', 'sex', 'activity_factor',
         ]));
     }
 
@@ -93,15 +92,6 @@ class Profile extends Page
                             ->helperText('Senza contare gli allenamenti: quelli vengono sommati a parte, giorno per giorno.'),
                     ])
                     ->columns(2),
-
-                Section::make('Da tenere presente')
-                    ->schema([
-                        Textarea::make('health_notes')
-                            ->label('Note di salute')
-                            ->rows(3)
-                            ->placeholder('Nessuna patologia nota.')
-                            ->helperText('Testo libero, lo legge anche l\'assistente. Non è una cartella clinica.'),
-                    ]),
 
                 /*
                  * L'unico modo di chiudere la finestra dei sette giorni prima
