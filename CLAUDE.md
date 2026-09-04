@@ -156,7 +156,7 @@ strani.
   strumenti (2.438 token) più il prompt, non la conversazione — che era già
   tagliata a dodici messaggi. Un consulente che non può toccare i pasti non ha
   motivo di portarsi dietro come si registrano. Chat spese: 4 strumenti. Chat
-  salute: 13.
+  salute: 14.
 - **Il prompt di sistema è spezzato in due blocchi**: uno statico (istruzioni e
   regole del dominio) marcato `cacheControl`, uno variabile (la data di oggi,
   il profilo, le categorie). L'ordine in cui l'API costruisce il prompt è
@@ -297,6 +297,13 @@ strani.
   — «Altre N categorie: X €» — così i conti chiudono. Nella stessa funzione i
   movimenti senza categoria erano già dichiarati: il principio c'era, era
   quell'istanza a essere sfuggita.
+- **Il peso si legge con `storico_peso`, non dai riepiloghi.**
+  `riepilogo_salute` del peso dice «da X a Y kg», cioè la prima e l'ultima
+  misurazione: fra 82 e 80 kg ci può stare qualunque cosa, e la media non è
+  ricavabile. Il caso che conta è il giorno senza misurazione — non ci si pesa
+  tutti i giorni — e lì la risposta onesta non è «non lo so» né un valore
+  interpolato: sono le due misurazioni intorno con la loro distanza in giorni.
+  Un peso interpolato entra nei conti con l'aria di uno misurato.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.

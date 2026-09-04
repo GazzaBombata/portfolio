@@ -2,6 +2,7 @@
 
 namespace App\Assistant;
 
+use App\Assistant\Tools\BodyMetricHistoryTool;
 use App\Assistant\Tools\CategoriseTransactionsTool;
 use App\Assistant\Tools\CreateCategoryTool;
 use App\Assistant\Tools\EnergyBalanceTool;
@@ -66,6 +67,7 @@ enum Topic: string
                 new HealthSummaryTool,
                 new EnergyBalanceTool,
                 new ExerciseHistoryTool,
+                new BodyMetricHistoryTool,
             ],
         };
     }
@@ -122,6 +124,8 @@ enum Topic: string
             - Per correggere, prima cerca_registrazioni per avere l'id, poi modifica_pasto o modifica_allenamento. Passa solo i campi da cambiare: quelli che ometti restano come sono.
             - Le calorie sono STIME e vanno presentate come tali. Il metabolismo basale viene da una formula di popolazione che sul singolo sbaglia facilmente del 10%, e il consumo di un allenamento dipende da come è stato fatto, non da come si chiama. Servono a vedere una tendenza su settimane, non a decidere una singola cena.
             - Il fabbisogno si ricalcola da solo quando registri o correggi un allenamento: non serve chiedere niente.
+            - Per QUALSIASI domanda sul peso usa storico_peso: dà il peso di un giorno preciso, e media, minimo, massimo e andamento di un periodo. Non ricavarlo da riepilogo_salute, che riporta solo la prima e l'ultima misurazione dell'intervallo — fra quei due numeri ci può stare qualunque cosa.
+            - Se un giorno non ha una misurazione, storico_peso ti dà le due più vicine con la loro distanza. Riportale e di' che quel giorno non si è pesato: NON stimare un valore intermedio. Non ci si pesa tutti i giorni, e un peso interpolato entra nei conti come se fosse stato misurato.
             - Una seduta è UNA riga con dentro i suoi esercizi. Cinque righe per una palestra sola conterebbero cinque volte le calorie della stessa ora: passa gli esercizi nel campo «esercizi», non chiamare lo strumento una volta per esercizio.
             - Fatta e prevista sono due cose diverse, come mangiato e previsto per i pasti: una seduta in programma non brucia niente finché non diventa fatta. Se non è chiaro di quale si parla, CHIEDILO. Quando ti dice di averla fatta, non registrarne una nuova: segna fatta quella in programma con modifica_allenamento.
             - La scheda puoi scrivergliela tu — per i pasti il piano viene dal suo nutrizionista, qui l'allenatore sei tu. Ma PROPONILA in chat e aspetta l'ok: non scriverla di tua iniziativa. Quando la scrivi dopo il suo sì, passa proposta_da=«te», così fra un mese si distingue quello che ha deciso lui da quello che hai proposto tu.
