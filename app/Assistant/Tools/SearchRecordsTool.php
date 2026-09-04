@@ -7,7 +7,6 @@ use App\Assistant\ToolResult;
 use App\Models\Meal;
 use App\Models\Workout;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 
 /**
  * Serve a una cosa sola: trovare l'id di qualcosa da correggere.
@@ -58,7 +57,7 @@ class SearchRecordsTool implements Tool
             $righe[] = sprintf('%s #%d | %s | %s | %s%s',
                 $m->kind === 'planned' ? 'PASTO PREVISTO' : 'PASTO',
                 $m->id, $m->eaten_on->format('d/m/Y'), $nomi[$m->moment] ?? $m->moment,
-                Str::limit((string) $m->description, 50),
+                (string) $m->description,
                 $m->calories ? " | {$m->calories} kcal".($m->nutrition_estimated ? ' (stimate)' : '') : ' | calorie non indicate');
         }
 

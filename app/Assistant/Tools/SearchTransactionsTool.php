@@ -6,7 +6,6 @@ use App\Assistant\Tool;
 use App\Assistant\ToolResult;
 use App\Finance\Reporting;
 use App\Models\Transaction;
-use Illuminate\Support\Str;
 
 class SearchTransactionsTool implements Tool
 {
@@ -66,7 +65,7 @@ class SearchTransactionsTool implements Tool
             $t->id,
             $t->booked_on->format('d/m/Y'),
             Reporting::euro((float) $t->amount),
-            Str::limit((string) $t->description, 45),
+            (string) $t->description,
             $t->account->name,
             $t->category?->name ?? 'DA CLASSIFICARE',
         ));

@@ -141,6 +141,15 @@
                             senza calorie: l'obiettivo qui sopra è più basso del piano vero, quindi la percentuale è più alta del dovuto.
                         </p>
                     @endif
+
+                    @if (! empty($attivitaSenzaDurata))
+                        <p class="nt-avviso">
+                            {{ collect($attivitaSenzaDurata)->map(fn ($a) => '«'.$a.'»')->implode(', ') }}
+                            {{ count($attivitaSenzaDurata) === 1 ? 'non ha' : 'non hanno' }} una durata,
+                            quindi {{ count($attivitaSenzaDurata) === 1 ? 'non è stata contata' : 'non sono state contate' }}
+                            nelle calorie bruciate.
+                        </p>
+                    @endif
                 @endif
             </div>
 

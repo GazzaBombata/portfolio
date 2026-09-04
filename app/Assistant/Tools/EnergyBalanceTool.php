@@ -136,6 +136,17 @@ class EnergyBalanceTool implements Tool
             ? '- Attività: nessuna registrata'
             : "- Attività: {$bruciate} kcal da ".$allenamenti->pluck('activity')->implode(', ');
 
+        // Una seduta senza durata è nell'elenco qui sopra ma non ha aggiunto
+        // niente al conto: senza dirlo, la riga sembra comprenderla.
+        $senzaDurata = Energy::workoutsWithoutDuration($giorno);
+
+        if ($senzaDurata !== []) {
+            $righe[] = '  ATTENZIONE: «'.implode('», «', $senzaDurata).'» '
+                .(count($senzaDurata) === 1 ? 'non ha' : 'non hanno')
+                .' né durata né calorie, quindi '.(count($senzaDurata) === 1 ? 'non è stata contata' : 'non sono state contate')
+                .' nel totale qui sopra. Chiedi quanto '.(count($senzaDurata) === 1 ? 'è durata' : 'sono durate').'.';
+        }
+
         $passi = $log?->steps;
         $daPassi = Energy::stepsBurn(Auth::user(), $giorno);
 

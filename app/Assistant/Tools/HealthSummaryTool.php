@@ -10,7 +10,6 @@ use App\Models\Meal;
 use App\Models\SleepLog;
 use App\Models\Workout;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Str;
 
 class HealthSummaryTool implements Tool
 {
@@ -51,7 +50,7 @@ class HealthSummaryTool implements Tool
 
         $righe[] = $notti->isEmpty()
             ? '- Sonno: nessuna notte registrata.'
-            : sprintf('- Sonno: %d notti, media %d minuti%s.', $notti->count(), (int) $notti->avg('minutes'),
+            : sprintf('- Sonno: %d notti, media %d minuti%s.', $notti->count(), (int) round((float) $notti->avg('minutes')),
                 $notti->whereNotNull('quality')->isNotEmpty() ? sprintf(', qualità media %.1f/5', $notti->avg('quality')) : '');
 
         $righe[] = $allenamenti->isEmpty()
@@ -62,7 +61,7 @@ class HealthSummaryTool implements Tool
         $righe[] = $pasti->isEmpty()
             ? '- Pasti: nessuno registrato.'
             : sprintf('- Pasti: %d registrati. Ultimi: %s.', $pasti->count(),
-                $pasti->reverse()->take(3)->map(fn (Meal $m): string => $m->eaten_on->format('d/m').' '.Str::limit($m->description, 40))->implode(' · '));
+                $pasti->reverse()->take(3)->map(fn (Meal $m): string => $m->eaten_on->format('d/m').' '.$m->description)->implode(' · '));
 
         $conAcqua = $giornate->whereNotNull('water_litres');
         $righe[] = $conAcqua->isEmpty()

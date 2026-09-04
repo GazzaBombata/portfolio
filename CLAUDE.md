@@ -269,6 +269,34 @@ strani.
   contenuto; adesso la scrive il modello ed è diversa ogni volta. Senza quella
   colonna non si saprebbe più quanto spesso sei giri non bastano — cioè il
   numero che dice se il tetto va alzato o se le domande vanno strette.
+- **Quello che arriva al modello non si taglia mai.** Le descrizioni erano
+  troncate a 40-50 caratteri per stare in riga: un piano come «petto di pollo
+  150 g, riso basmati 80 g, zucchine…» arrivava a metà. Il modello non
+  distingue una stringa tagliata da una intera e risponde con la stessa
+  sicurezza — ma il danno vero è che quel modello **scrive**: `modifica_pasto`
+  prende una descrizione, quindi un taglio fatto per l'estetica torna indietro
+  come valore vero e la parte mancante è persa. Un limite di visualizzazione
+  che raggiunge uno strumento di scrittura non è cosmetico. Il troncamento
+  resta solo in `ToolResult::summary`, che è l'etichetta della pastiglia a
+  schermo e non arriva mai al modello. **Un tetto sul numero di righe invece
+  si può tenere, ma va dichiarato**: `cerca_movimenti` scrive «ne mostro i 30
+  più recenti», e una risposta costruita su un campione spacciato per
+  l'insieme è il modo in cui nasce un numero sbagliato.
+- **Un allenamento senza durata vale zero, e va detto**
+  (`Energy::workoutsWithoutDuration()`). `activityBurn()` salta chi non ha né
+  calorie né minuti — giustamente, perché senza durata non c'è niente da
+  calcolare e inventarla sarebbe peggio. Ma la seduta resta nell'elenco del
+  giorno, quindi *sembra* contata mentre vale zero, e il fabbisogno esce più
+  basso del vero. È lo stesso caso di `plannedWithoutCalories()` sul lato del
+  cibo e si risolve allo stesso modo: lo dicono sia `bilancio_calorico` sia il
+  riquadro «Oggi».
+- **Una ripartizione che non somma al totale è peggio di nessuna
+  ripartizione.** `riepilogo_spese` si fermava alle prime 15 categorie senza
+  dirlo: le voci elencate non tornavano con le uscite, e non c'era modo di
+  accorgersene. Ora le prime 15 si elencano e **la coda si accorpa in una riga**
+  — «Altre N categorie: X €» — così i conti chiudono. Nella stessa funzione i
+  movimenti senza categoria erano già dichiarati: il principio c'era, era
+  quell'istanza a essere sfuggita.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.

@@ -272,6 +272,32 @@ class Energy
             ->count();
     }
 
+    /**
+     * Gli allenamenti fatti che non hanno potuto contare niente.
+     *
+     * `activityBurn()` salta chi non ha né calorie né minuti: senza durata non
+     * c'è nessun conto da fare, e inventarne una sarebbe peggio. Ma il risultato
+     * è che una seduta registrata vale zero, e il fabbisogno esce più basso del
+     * vero senza che niente lo dica — mentre nella schermata quella seduta si
+     * vede, quindi sembra contata.
+     *
+     * È lo stesso caso di `plannedWithoutCalories()` sul lato del cibo, e si
+     * risolve allo stesso modo: non correggibile in automatico, quindi si
+     * segnala.
+     *
+     * @return array<int, string>
+     */
+    public static function workoutsWithoutDuration(CarbonImmutable $day): array
+    {
+        return Workout::query()
+            ->done()
+            ->whereDate('performed_on', $day)
+            ->whereNull('calories')
+            ->whereNull('minutes')
+            ->pluck('activity')
+            ->all();
+    }
+
     private static function metFor(string $activity): float
     {
         $nome = mb_strtolower(trim($activity));

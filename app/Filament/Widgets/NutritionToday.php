@@ -52,6 +52,9 @@ class NutritionToday extends Widget
             'pianoIncompleto' => Energy::plannedWithoutCalories($oggi),
             'basale' => $utente !== null ? (int) round((float) (Energy::basalRate($utente) ?? 0) * (float) $utente->activity_factor) : 0,
             'attivita' => $utente !== null ? Energy::activityBurn($utente, $oggi) : 0,
+            // Una seduta senza durata si vede fra gli allenamenti ma vale zero
+            // calorie: senza dirlo, il riquadro sembra averla contata.
+            'attivitaSenzaDurata' => Energy::workoutsWithoutDuration($oggi),
             'passi' => $utente !== null ? Energy::stepsBurn($utente, $oggi) : 0,
             'pasti' => $this->pasti($oggi),
         ];
