@@ -16,6 +16,7 @@ strani.
 - **Admin/UI**: Filament 5 · **Frontend**: Livewire 4, Alpine · **CSS**: Tailwind 4, Vite
 - **DB**: MySQL 8 · **Code e cache**: Redis
 - **Test**: Pest 5 · **Lint**: Laravel Pint
+- **PDF**: `barryvdh/laravel-dompdf`, come negli altri progetti in `projects/`
 - **AI**: `anthropic-ai/sdk`, modello da `config/ai.php`
 
 ### Ambienti
@@ -307,6 +308,19 @@ strani.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.
+- **Il diario in PDF tiene i giorni vuoti e non scrive zero.** Una riga per
+  giorno dal più vecchio al più recente è la forma che esce dal pannello — da
+  un nutrizionista si sfoglia una tabella, non cinque elenchi filtrati. Da lì
+  due scelte. I giorni senza niente **restano** (`App\Health\Diary`, e la
+  spunta per toglierli è spenta): nasconderli fa sembrare continuo un
+  tracciamento che ha saltato tre settimane, che è l'unica cosa che una fila di
+  giorni racconta meglio di qualunque media. E un giorno senza pasti registrati
+  ha «mangiate —», non 0: in una colonna di numeri uno zero diventa un bilancio
+  di −2.400 kcal, cioè un digiuno che non c'è stato. Il fabbisogno delle righe
+  passate è quello **salvato** in `daily_logs.target_calories`, non uno
+  ricalcolato oggi con il peso di oggi (vedi `DayRecalculator`); si ricalcola
+  solo dove non c'è, o dove quella colonna ospita un obiettivo scritto a mano,
+  che è un altro numero.
 
 ## Comandi
 

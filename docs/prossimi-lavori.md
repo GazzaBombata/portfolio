@@ -94,6 +94,9 @@ Niente di aperto.
       (26/08/2026). Nell'occasione: il prezzo di Sonnet 5 in listino era quello
       di Sonnet 4.6 — 3/15 invece di 2/10 — quindi il conteggio sovrastimava.
 
+- [x] Diario in PDF, una riga per giorno con dentro tutto quello che quel
+      giorno ha registrato (06/09/2026)
+
 - [x] Ricostruzione del progetto sullo stack corrente (21/08/2026)
 - [x] Import degli estratti conto di cinque istituti, 664 movimenti
 - [x] Riconoscimento giroconti, categorizzazione a regole e con il modello
