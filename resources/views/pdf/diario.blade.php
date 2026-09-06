@@ -87,24 +87,25 @@
 </p>
 
 <table>
+    {{--
+        Le larghezze in proporzione: i pasti sono la colonna con dentro delle
+        frasi intere, il piano ne ha di più corte, tutto il resto sono numeri.
+        Sonno, corpo, passi e acqua stanno in una colonna sola per liberare lo
+        spazio — erano quattro colonne di due cifre l'una, con tre quarti di
+        larghezza sprecata in bianco.
+    --}}
     <colgroup>
-        <col style="width: 11%">
-        <col style="width: 8%">
-        <col style="width: 7%">
-        <col style="width: 4.5%">
-        <col style="width: 4.5%">
-        <col style="width: 15.5%">
-        <col style="width: 17.5%">
-        <col style="width: 15%">
-        <col style="width: 17%">
+        <col style="width: 11.1%">
+        <col style="width: 11.1%">
+        <col style="width: 11.1%">
+        <col style="width: 33.4%">
+        <col style="width: 22.2%">
+        <col style="width: 11.1%">
     </colgroup>
     <thead>
     <tr>
         <th>Giorno</th>
-        <th>Sonno</th>
-        <th>Corpo</th>
-        <th>Passi</th>
-        <th>Acqua</th>
+        <th>Sonno, corpo, passi, acqua</th>
         <th>Allenamenti</th>
         <th>Mangiato</th>
         <th>Piano</th>
@@ -124,63 +125,46 @@
             @if ($riga['vuoto'])
                 {{-- Un giorno vuoto è un'informazione: nasconderlo farebbe
                      sembrare continuo un tracciamento che si è interrotto. --}}
-                <td colspan="8" class="vuoto">niente registrato</td>
+                <td colspan="5" class="vuoto">niente registrato</td>
             @else
                 <td>
-                    @if ($riga['sonno'] === null)
-                        <span class="nulla">—</span>
-                    @else
-                        <span class="num">{{ $ore($riga['sonno']['minuti']) }}</span>
-                        @if ($riga['sonno']['qualita'] !== null)
-                            <br><span class="etichetta">qualità {{ $riga['sonno']['qualita'] }}/5</span>
-                        @endif
-                        @if ($riga['sonno']['risvegli'] !== null)
-                            <br><span class="etichetta">{{ $riga['sonno']['risvegli'] }} risvegli</span>
-                        @endif
-                        @if ($riga['sonno']['addormentato'] || $riga['sonno']['sveglio'])
-                            <br><span class="etichetta">{{ $riga['sonno']['addormentato'] ?? '?' }}–{{ $riga['sonno']['sveglio'] ?? '?' }}</span>
-                        @endif
-                        @if (filled($riga['sonno']['note']))
-                            <div class="nota">{{ $riga['sonno']['note'] }}</div>
-                        @endif
-                    @endif
-                </td>
+                    @php($misure = $riga['sonno'] !== null || $riga['corpo'] !== null || $riga['passi'] !== null || $riga['acqua'] !== null)
 
-                <td>
-                    @if ($riga['corpo'] === null)
+                    @unless ($misure)
                         <span class="nulla">—</span>
-                    @else
-                        @if ($riga['corpo']['peso'] !== null)
-                            <span class="num">{{ $dec($riga['corpo']['peso']) }} kg</span>
-                        @endif
-                        @if ($riga['corpo']['grasso'] !== null)
-                            <br><span class="etichetta">grasso {{ $dec($riga['corpo']['grasso']) }}%</span>
-                        @endif
-                        @if ($riga['corpo']['muscolo'] !== null)
-                            <br><span class="etichetta">muscolo {{ $dec($riga['corpo']['muscolo']) }} kg</span>
-                        @endif
-                        @if ($riga['corpo']['battito'] !== null)
-                            <br><span class="etichetta">{{ $riga['corpo']['battito'] }} bpm</span>
-                        @endif
-                        @if (filled($riga['corpo']['note']))
-                            <div class="nota">{{ $riga['corpo']['note'] }}</div>
-                        @endif
-                    @endif
-                </td>
+                    @endunless
 
-                <td class="num">
-                    @if ($riga['passi'] === null)
-                        <span class="nulla">—</span>
-                    @else
-                        {{ number_format($riga['passi'], 0, ',', '.') }}
+                    @if ($riga['sonno'] !== null)
+                        <div class="voce">
+                            <span class="etichetta">sonno</span> {{ $ore($riga['sonno']['minuti']) }}@if ($riga['sonno']['qualita'] !== null) · qualità {{ $riga['sonno']['qualita'] }}/5 @endif@if ($riga['sonno']['risvegli'] !== null) · {{ $riga['sonno']['risvegli'] }} {{ $riga['sonno']['risvegli'] === 1 ? 'risveglio' : 'risvegli' }} @endif@if ($riga['sonno']['addormentato'] || $riga['sonno']['sveglio']) · {{ $riga['sonno']['addormentato'] ?? '?' }}–{{ $riga['sonno']['sveglio'] ?? '?' }} @endif
+                            @if (filled($riga['sonno']['note']))
+                                <div class="nota">{{ $riga['sonno']['note'] }}</div>
+                            @endif
+                        </div>
                     @endif
-                </td>
 
-                <td class="num">
-                    @if ($riga['acqua'] === null)
-                        <span class="nulla">—</span>
-                    @else
-                        {{ $dec($riga['acqua'], 2) }} l
+                    @if ($riga['corpo'] !== null)
+                        <div class="voce">
+                            <span class="etichetta">peso</span> {{ $riga['corpo']['peso'] === null ? 'non misurato' : $dec($riga['corpo']['peso']).' kg' }}@if ($riga['corpo']['grasso'] !== null) · grasso {{ $dec($riga['corpo']['grasso']) }}% @endif@if ($riga['corpo']['muscolo'] !== null) · muscolo {{ $dec($riga['corpo']['muscolo']) }} kg @endif@if ($riga['corpo']['battito'] !== null) · {{ $riga['corpo']['battito'] }} bpm @endif
+                            @if (filled($riga['corpo']['note']))
+                                <div class="nota">{{ $riga['corpo']['note'] }}</div>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{--
+                        Passi e acqua su due righe, e non incolonnati con dei
+                        @if in fila: una direttiva attaccata a una lettera —
+                        «l@endif» — Blade non la compila e non lo dice, la
+                        lascia scritta nella pagina e sballa tutto il resto
+                        del file.
+                    --}}
+                    @if ($riga['passi'] !== null)
+                        <div class="voce"><span class="etichetta">passi</span> {{ number_format($riga['passi'], 0, ',', '.') }}</div>
+                    @endif
+
+                    @if ($riga['acqua'] !== null)
+                        <div class="voce"><span class="etichetta">acqua</span> {{ $dec($riga['acqua'], 2) }} litri</div>
                     @endif
                 </td>
 
@@ -274,7 +258,7 @@
             @endif
         </tr>
     @empty
-        <tr><td colspan="9" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
+        <tr><td colspan="6" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
     @endforelse
     </tbody>
 </table>
