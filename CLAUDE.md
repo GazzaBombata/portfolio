@@ -308,6 +308,17 @@ strani.
 - **L'assistente non può dichiarare scritture che non ha fatto**: se il testo
   annuncia una registrazione e nessuno strumento marcato `ChangesSomething` è
   stato eseguito in quel turno, la risposta viene riscritta con un avviso.
+- **La qualità del sonno è su cinque, l'aderenza al piano su dieci**, e le due
+  colonne si guardano. In tabella c'erano notti con 8 su cinque: le aveva
+  scritte il seeder di agosto con la scala della colonna accanto, e non se n'è
+  accorto nessuno finché quel numero non è finito stampato accanto al suo
+  «/5» — un valore fuori scala non si vede, perché 8 resta un bel voto in
+  tutte e due. Chi stava sopra il 5 è stato dimezzato; chi era già dentro non
+  si è toccato, perché un 3 su cinque e un 3 su dieci sono la stessa cifra e
+  non c'è niente nei dati che li distingua. Adesso il fuori scala si ferma in
+  tre punti — il form offre cinque voci, `registra_sonno` torna indietro e
+  chiede invece di dimezzare a indovinare, e la colonna ha un `CHECK` — perché
+  quello che c'era dentro non era passato da nessuno dei primi due.
 - **Il diario in PDF tiene i giorni vuoti e non scrive zero.** Una riga per
   giorno dal più vecchio al più recente è la forma che esce dal pannello — da
   un nutrizionista si sfoglia una tabella, non cinque elenchi filtrati. Da lì

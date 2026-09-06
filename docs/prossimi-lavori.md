@@ -96,6 +96,8 @@ Niente di aperto.
 
 - [x] Diario in PDF, una riga per giorno con dentro tutto quello che quel
       giorno ha registrato (06/09/2026)
+- [x] Qualità del sonno rimessa in scala 1-5, con il vincolo in tabella
+      (06/09/2026): il seeder ci scriveva la scala 1-10 dell'aderenza
 
 - [x] Ricostruzione del progetto sullo stack corrente (21/08/2026)
 - [x] Import degli estratti conto di cinque istituti, 664 movimenti

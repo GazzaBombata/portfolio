@@ -27,7 +27,10 @@ class LogSleepTool implements ChangesSomething, Tool
             'properties' => [
                 'notte_del' => ['type' => 'string', 'description' => 'La sera in cui è andato a dormire, in formato AAAA-MM-GG'],
                 'minuti' => ['type' => ['integer', 'null'], 'description' => 'Quanto ha dormito in minuti'],
-                'qualita' => ['type' => ['integer', 'null'], 'description' => 'Da 1 (pessima) a 5 (ottima)'],
+                // minimum/maximum oltre alla descrizione: il modello legge lo
+                // schema, e un numero fuori scala qui dentro è già arrivato in
+                // tabella una volta.
+                'qualita' => ['type' => ['integer', 'null'], 'description' => 'Da 1 (pessima) a 5 (ottima). Se te la dicono su dieci, dividila per due prima di scriverla.', 'minimum' => 1, 'maximum' => 5],
                 'risvegli' => ['type' => ['integer', 'null']],
                 'note' => ['type' => ['string', 'null']],
             ],
@@ -39,11 +42,28 @@ class LogSleepTool implements ChangesSomething, Tool
     {
         $notte = CarbonImmutable::parse($input['notte_del'])->toDateString();
 
+        $qualita = $input['qualita'] ?? null;
+
+        /*
+         * Fuori scala si torna indietro invece di registrare.
+         *
+         * Il modello sente «ho dormito otto su dieci» e la scala qui è
+         * un'altra: dimezzare al posto suo vorrebbe dire indovinare, e
+         * lasciar passare l'otto rimetterebbe in tabella esattamente il dato
+         * che questa versione è servita a togliere. Chiedere costa un giro.
+         */
+        if ($qualita !== null && ((int) $qualita < 1 || (int) $qualita > 5)) {
+            return ToolResult::error(
+                "La qualità del sonno va da 1 (pessima) a 5 (ottima), e {$qualita} è fuori scala. "
+                .'Se te l\'ha detta su dieci, chiedigli conferma di quanto vale su cinque prima di registrarla.'
+            );
+        }
+
         $log = SleepLog::updateOrCreate(
             ['night_of' => $notte],
             array_filter([
                 'minutes' => $input['minuti'] ?? null,
-                'quality' => $input['qualita'] ?? null,
+                'quality' => $qualita,
                 'awakenings' => $input['risvegli'] ?? null,
                 'notes' => $input['note'] ?? null,
             ], fn ($v): bool => $v !== null),
