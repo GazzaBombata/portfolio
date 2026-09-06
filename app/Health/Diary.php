@@ -84,7 +84,7 @@ class Diary
         $pesi = BodyMetric::query()->whereBetween('measured_on', [$da, $a])->get()
             ->keyBy(fn (BodyMetric $p): string => $p->measured_on->toDateString());
 
-        $pasti = Meal::query()->whereBetween('eaten_on', [$da, $a])->get()
+        $pasti = Meal::query()->with('items')->whereBetween('eaten_on', [$da, $a])->get()
             ->groupBy(fn (Meal $p): string => $p->eaten_on->toDateString());
 
         // Gli esercizi si caricano insieme alle sedute: senza, una scheda di
@@ -251,6 +251,16 @@ class Diary
                 : "{$senzaCalorie} pasti mangiati senza calorie: il totale è più basso del vero";
         }
 
+        // Un ingrediente senza calorie non si vede: il pasto un totale ce l'ha,
+        // solo che è la somma di meno righe di quante ne ha davvero.
+        $ingredientiSenza = array_sum(array_map(fn (array $p): int => $p['ingredientiSenzaCalorie'], $mangiati));
+
+        if ($ingredientiSenza > 0) {
+            $avvisi[] = $ingredientiSenza === 1
+                ? '1 ingrediente senza calorie: il totale del suo pasto è più basso del vero'
+                : "{$ingredientiSenza} ingredienti senza calorie: il totale dei loro pasti è più basso del vero";
+        }
+
         if (($previstiSenza = Energy::plannedWithoutCalories($giorno)) > 0) {
             $avvisi[] = $previstiSenza === 1
                 ? '1 pasto previsto senza calorie: l\'obiettivo è più basso del piano'
@@ -259,6 +269,14 @@ class Diary
 
         foreach (Energy::workoutsWithoutDuration($giorno) as $attivita) {
             $avvisi[] = "{$attivita}: senza durata, vale zero calorie";
+        }
+
+        foreach (Energy::grossWithoutDuration($giorno) as $attivita) {
+            $avvisi[] = "{$attivita}: calorie da cardio senza durata, il basale di quei minuti è contato due volte";
+        }
+
+        foreach (Energy::defaultMetWorkouts($giorno) as $attivita) {
+            $avvisi[] = "{$attivita}: attività sconosciuta, contata con il valore di ripiego";
         }
 
         foreach (Energy::overlappingWorkouts($giorno) as $attivita) {
@@ -316,6 +334,7 @@ class Diary
                 'proteine' => $p->protein_g,
                 'carboidrati' => $p->carbs_g,
                 'grassi' => $p->fat_g,
+                'ingredientiSenzaCalorie' => $p->items->whereNull('calories')->count(),
                 'stimato' => (bool) $p->nutrition_estimated,
                 'fuori' => (bool) $p->eaten_out,
                 'note' => $p->notes,

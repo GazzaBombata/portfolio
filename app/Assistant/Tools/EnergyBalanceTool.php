@@ -147,6 +147,24 @@ class EnergyBalanceTool implements Tool
                 .' nel totale qui sopra. Chiedi quanto '.(count($senzaDurata) === 1 ? 'è durata' : 'sono durate').'.';
         }
 
+        // Calorie lorde che nessuno ha potuto nettare, e attività contate con
+        // il MET di ripiego: due modi diversi di uscire più alti del vero.
+        $lorde = Energy::grossWithoutDuration($giorno);
+
+        if ($lorde !== []) {
+            $righe[] = '  ATTENZIONE: «'.implode('», «', $lorde).'» ha le calorie scritte a mano ma nessuna durata, '
+                .'quindi il metabolismo basale di quei minuti è contato due volte e il fabbisogno è più alto del vero. '
+                .'Chiedi quanto è durata.';
+        }
+
+        $ripiego = Energy::defaultMetWorkouts($giorno);
+
+        if ($ripiego !== []) {
+            $righe[] = '  ATTENZIONE: «'.implode('», «', $ripiego).'»: la tabella non conosce questa attività, '
+                .'quindi è stata contata con il valore di ripiego (moderatamente impegnativa). '
+                .'Se è più leggera o più dura di così, il numero qui sopra è sbagliato: dillo.';
+        }
+
         $passi = $log?->steps;
         $daPassi = Energy::stepsBurn(Auth::user(), $giorno);
 

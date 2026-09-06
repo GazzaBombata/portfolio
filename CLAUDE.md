@@ -319,6 +319,49 @@ strani.
   tre punti — il form offre cinque voci, `registra_sonno` torna indietro e
   chiede invece di dimezzare a indovinare, e la colonna ha un `CHECK` — perché
   quello che c'era dentro non era passato da nessuno dei primi due.
+- **Un allenamento non è solo il suo nome: l'intensità pesa, e il numero di un
+  cardio è lordo.** Tre difetti trovati insieme il 06/09/2026 rileggendo un
+  mese di dati veri. L'**intensità** era registrata e mai usata: «bici molto
+  tranquilla 1/5» valeva quanto una bici a tutta, 406 kcal per 40 minuti di
+  scarico. Adesso moltiplica il consumo netto — 1 vale 0,6 e 5 vale 1,4 — con
+  il **3 come neutro**, così una seduta senza intensità (quasi tutto lo
+  storico) vale esattamente quanto valeva. Le **calorie lette su un cardio**
+  entravano intere mentre il ramo MET sottraeva il basale: la stessa doppia
+  contabilità che `MET − 1` esiste per togliere, solo che di lì non la toglieva
+  nessuno — 720 kcal di basket su 55 minuti ne portavano dentro 91 già contate.
+  Ora si sottrae `basale_giornaliero / 1440 × minuti`; senza durata non si può,
+  e `grossWithoutDuration()` lo dice invece di indovinarla. Il **MET di
+  ripiego** (5,0, cioè una seduta di pesi) resta per i nomi che la tabella non
+  conosce, ma `defaultMetWorkouts()` lo dichiara: era il modo in cui le bocce
+  hanno pagato 381 kcal all'ora per settimane senza che niente lo dicesse.
+  Sulla finestra 25/08–05/09 le tre correzioni valgono 918 kcal, da −701 a
+  −624 kcal di deficit al giorno.
+
+  **Lo storico non è stato ricalcolato** (`daily_logs.target_calories` resta
+  quello salvato): i giorni prima del 06/09/2026 hanno i numeri vecchi, e quelli
+  dopo i nuovi. Un giorno passato torna alla formula corrente solo se qualcuno
+  ne tocca un allenamento, perché l'observer lo ripassa.
+- **I passi non sono un allenamento**, e `registra_allenamento` li rifiuta. Il
+  25/08/2026 erano finiti in una seduta chiamata «Passi giornalieri (non un
+  allenamento)» con zero calorie e il numero nella descrizione: da lì non li
+  legge nessuno — `Energy::stepsBurn()` guarda `daily_logs.steps` — e quel
+  giorno hanno contato zero. Su sette giorni su dodici i passi stavano solo
+  nelle note. Registrarli come seduta sarebbe stato anche peggio che perderli:
+  contati due volte, una come attività e una come passi.
+- **Un pasto ha degli ingredienti, e il totale è la loro somma.** Le calorie di
+  un pasto le stima un modello linguistico — non c'è nessun database
+  alimentare, ed è la voce più grossa e meno verificabile di tutto il bilancio.
+  Finché era **un numero solo** non c'era niente da controllare: una cifra non
+  ha parti. Un pranzo dichiarava 640 kcal e 36 g di grassi, ma i tre cucchiai
+  d'olio che aveva dentro quei 36 g li esauriscono da soli — alla carne ne
+  restava zero. Non era un errore di somma, era una stima ottimistica, e a riga
+  singola non era smontabile; sommato voce per voce lo stesso piatto fa circa
+  700. Adesso `meal_items` tiene le righe e un observer rifà il totale del
+  pasto, come `workout_exercises` dentro una seduta e per la stessa ragione.
+  Il totale resta sul pasto perché `Energy::intake()` è una somma in SQL, ma è
+  **derivato**: scriverlo a mano accanto alle righe sarebbe il secondo posto
+  per la stessa cosa. Null non è zero — se nessun ingrediente ha le calorie il
+  pasto resta «non registrate», perché uno zero abbasserebbe la giornata.
 - **Il diario in PDF tiene i giorni vuoti e non scrive zero.** Una riga per
   giorno dal più vecchio al più recente è la forma che esce dal pannello — da
   un nutrizionista si sfoglia una tabella, non cinque elenchi filtrati. Da lì

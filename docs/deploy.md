@@ -103,6 +103,10 @@ compreso quello di reset password.
 
 ## Dopo ogni deploy
 
+Lo script **migra da solo**: verificato il 06/09/2026: le migrazioni spinte in
+`main` risultano già `Ran` in produzione senza che nessuno le abbia lanciate a
+mano. Quindi non serve passare da Forge → Commands per una migrazione normale.
+
 Lo script deve contenere `php artisan queue:restart`: i worker sono processi
 lunghi e non ricaricano codice né configurazione a caldo. Il sintomo tipico di
 una dimenticanza è un job che fallisce per "config mancante" e che a mano non si

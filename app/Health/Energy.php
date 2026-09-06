@@ -33,6 +33,12 @@ class Energy
         'corsa' => 9.8, 'running' => 9.8, 'jogging' => 7.0,
         'camminata' => 3.5, 'passeggiata' => 3.0, 'trekking' => 6.0,
         'bici' => 7.5, 'ciclismo' => 7.5, 'bicicletta' => 7.5, 'spinning' => 8.5,
+        // La cyclette non contiene «bici» e cadeva sul default: un valore
+        // vicino per caso, non per averlo scelto.
+        'cyclette' => 6.0,
+        // Le bocce valevano 5.0 come una seduta di pesi. Un'ora di bocce non è
+        // un'ora di palestra, ed erano 381 kcal a partita.
+        'bocce' => 3.0, 'bowling' => 3.0, 'biliardo' => 2.5,
         'nuoto' => 7.0, 'piscina' => 6.0,
         'palestra' => 5.0, 'pesi' => 5.0, 'sala pesi' => 5.0, 'crossfit' => 8.0,
         'calcio' => 7.0, 'calcetto' => 7.0, 'tennis' => 7.3, 'padel' => 6.5,
@@ -41,6 +47,22 @@ class Energy
     ];
 
     private const MET_PREDEFINITO = 5.0;
+
+    /**
+     * Quanto pesa l'intensità dichiarata sul consumo netto.
+     *
+     * I MET della tabella sono valori di sessione TIPICA: 7,5 per la bici è
+     * già un ciclista che tiene un passo, non una pedalata di scarico. Finché
+     * l'intensità è stata solo registrata e mai usata, «bici molto tranquilla
+     * 1/5» e una bici a tutta contavano identico — 406 kcal per 40 minuti di
+     * scarico, cioè circa il doppio del vero.
+     *
+     * Il 3 è il neutro, quindi una seduta senza intensità — che è quasi tutto
+     * lo storico — vale esattamente quanto valeva prima. La scala è stretta di
+     * proposito: moltiplica una stima, non ne fa una misura, e allargarla
+     * darebbe a un menu a tendina un peso che non ha.
+     */
+    private const INTENSITA = [1 => 0.6, 2 => 0.8, 3 => 1.0, 4 => 1.2, 5 => 1.4];
 
     /**
      * I passi già compresi nel fattore di attività del profilo.
@@ -121,13 +143,14 @@ class Energy
             return 0;
         }
 
+        $basaleAlMinuto = static::restingPerMinute($user, $peso);
         $totale = 0.0;
 
         foreach (Workout::query()->done()->whereDate('performed_on', $day)->get() as $workout) {
             // Se le calorie sono state registrate, si usano quelle: chi le ha
             // scritte guardava un cardiofrequenzimetro, non una tabella.
             if ($workout->calories !== null) {
-                $totale += $workout->calories;
+                $totale += static::netOfResting((int) $workout->calories, $workout->minutes, $basaleAlMinuto);
 
                 continue;
             }
@@ -149,10 +172,96 @@ class Energy
              * un'ora di cyclette e un'ora di camminata sarebbero misurate con
              * due metri diversi.
              */
-            $totale += max(0, static::metFor((string) $workout->activity) - 1) * $peso * ($workout->minutes / 60);
+            $totale += max(0, static::metFor((string) $workout->activity) - 1)
+                * $peso
+                * ($workout->minutes / 60)
+                * static::intensityFactor($workout->intensity);
         }
 
         return (int) round($totale);
+    }
+
+    /**
+     * Le calorie lette su un cardio, tolto il basale di quei minuti.
+     *
+     * Polar e i braccialetti riportano le calorie TOTALI della sessione:
+     * dentro c'è anche quello che il corpo avrebbe consumato restando fermo,
+     * e quella parte le 24 ore del basale la contano già. Sommarle intere è
+     * la stessa doppia contabilità che il «MET − 1» toglie dall'altro ramo —
+     * solo che qui non la toglieva nessuno: 720 kcal di basket su 55 minuti
+     * ne portavano dentro 91 già contate, e i 150 minuti di attività manuale
+     * del 26/08/2026 ne portavano 249.
+     *
+     * Senza durata non si può sottrarre niente, e inventare quanto è durata
+     * sarebbe peggio: il numero passa intero e `grossWithoutDuration()` lo
+     * dice.
+     */
+    private static function netOfResting(int $calories, ?int $minutes, float $basaleAlMinuto): float
+    {
+        if ($minutes === null || $basaleAlMinuto <= 0) {
+            return $calories;
+        }
+
+        // Mai sotto zero: un cardio che riporta meno del basale ha misurato
+        // male, e un contributo negativo gonfierebbe il deficit dall'altra parte.
+        return max(0, $calories - $basaleAlMinuto * $minutes);
+    }
+
+    /** Quanto basale passa in un minuto di quella giornata. */
+    private static function restingPerMinute(User $user, float $peso): float
+    {
+        $basale = static::basalRate($user, $peso);
+
+        return $basale === null ? 0.0 : $basale * (float) $user->activity_factor / 1440;
+    }
+
+    private static function intensityFactor(?int $intensity): float
+    {
+        return self::INTENSITA[$intensity] ?? 1.0;
+    }
+
+    /**
+     * Le sedute il cui MET è il valore di ripiego, non uno scelto.
+     *
+     * Il default è 5.0, cioè una seduta di pesi: qualunque attività con un
+     * nome che la tabella non conosce viene contata come moderatamente
+     * impegnativa. È il modo in cui le bocce sono valse 381 kcal all'ora per
+     * settimane senza che niente lo dicesse. Non è correggibile in automatico
+     * — il nome non dice cosa sia — quindi si segnala, come tutto il resto.
+     *
+     * @return array<int, string>
+     */
+    public static function defaultMetWorkouts(CarbonImmutable $day): array
+    {
+        return Workout::query()
+            ->done()
+            ->whereDate('performed_on', $day)
+            ->whereNull('calories')
+            ->whereNotNull('minutes')
+            ->get()
+            ->filter(fn (Workout $w): bool => static::metIsGuessed((string) $w->activity))
+            ->pluck('activity')
+            ->all();
+    }
+
+    /**
+     * Le sedute con le calorie scritte a mano ma senza durata.
+     *
+     * Il basale di quei minuti non si può togliere, quindi il numero entra
+     * lordo e il fabbisogno esce più alto del vero. Basta la durata per
+     * chiuderlo.
+     *
+     * @return array<int, string>
+     */
+    public static function grossWithoutDuration(CarbonImmutable $day): array
+    {
+        return Workout::query()
+            ->done()
+            ->whereDate('performed_on', $day)
+            ->whereNotNull('calories')
+            ->whereNull('minutes')
+            ->pluck('activity')
+            ->all();
     }
 
     /**
@@ -300,6 +409,17 @@ class Energy
 
     private static function metFor(string $activity): float
     {
+        return static::metLookup($activity) ?? self::MET_PREDEFINITO;
+    }
+
+    /** Vero quando la tabella non conosce quel nome e si è ripiegato sul default. */
+    private static function metIsGuessed(string $activity): bool
+    {
+        return static::metLookup($activity) === null;
+    }
+
+    private static function metLookup(string $activity): ?float
+    {
         $nome = mb_strtolower(trim($activity));
 
         foreach (self::MET as $chiave => $met) {
@@ -308,7 +428,7 @@ class Energy
             }
         }
 
-        return self::MET_PREDEFINITO;
+        return null;
     }
 
     public static function age(User $user): ?int

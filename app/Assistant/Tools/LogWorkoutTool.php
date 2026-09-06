@@ -83,6 +83,25 @@ class LogWorkoutTool implements ChangesSomething, Tool
             );
         }
 
+        /*
+         * I passi non sono un allenamento, e non entrano da qui.
+         *
+         * È già successo: il 25/08/2026 i passi di una giornata sono finiti in
+         * una seduta chiamata «Passi giornalieri (non un allenamento)» con
+         * zero calorie e il numero scritto nella descrizione. Da lì non li
+         * legge nessuno — `Energy::stepsBurn()` guarda `daily_logs.steps` — e
+         * quel giorno i passi hanno contato zero. Registrarli come seduta
+         * sarebbe anche peggio che perderli: verrebbero contati due volte,
+         * una come attività e una come passi.
+         */
+        if (preg_match('/\bpassi\b|contapassi|passi giornalieri/iu', (string) $input['attivita']) === 1) {
+            return ToolResult::error(
+                'I passi non sono un allenamento: si registrano con registra_giornata, campo «passi». '
+                .'Da lì entrano nel fabbisogno oltre i primi 5.000, che il fattore di attività già comprende. '
+                .'Se invece è stata una camminata vera E i passi di quel giorno non li hai, registrala come camminata.',
+            );
+        }
+
         $workout = Workout::create(array_filter([
             'kind' => $prevista ? 'planned' : 'done',
             'authored_by' => $daAssistente ? 'assistant' : 'person',

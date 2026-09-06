@@ -34,6 +34,24 @@ class UpdateMealTool implements ChangesSomething, Tool
                 'proteine_g' => ['type' => ['integer', 'null']],
                 'carboidrati_g' => ['type' => ['integer', 'null']],
                 'grassi_g' => ['type' => ['integer', 'null']],
+                'ingredienti' => [
+                    'type' => ['array', 'null'],
+                    'description' => 'Il pasto smontato voce per voce. USALO SEMPRE quando il pasto ha più di un ingrediente: '
+                        .'il totale lo somma il codice, quindi la stima si controlla riga per riga invece di doverla credere. '
+                        .'Conta anche i condimenti: l\'olio di tre cucchiai vale più della carne che condisce.',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'nome' => ['type' => 'string', 'description' => 'Petto di pollo, olio extravergine, pane integrale…'],
+                            'quantita' => ['type' => ['string', 'null'], 'description' => 'Come si dice davvero: «200 g», «3 cucchiai», «mezza pizza».'],
+                            'calorie' => ['type' => ['integer', 'null']],
+                            'proteine_g' => ['type' => ['integer', 'null']],
+                            'carboidrati_g' => ['type' => ['integer', 'null']],
+                            'grassi_g' => ['type' => ['integer', 'null']],
+                        ],
+                        'required' => ['nome'],
+                    ],
+                ],
                 'stimati' => ['type' => ['boolean', 'null']],
             ],
             'required' => ['id'],
@@ -66,14 +84,21 @@ class UpdateMealTool implements ChangesSomething, Tool
             $modifiche['nutrition_estimated'] = (bool) $input['stimati'];
         }
 
-        if ($modifiche === []) {
+        $ingredienti = $input['ingredienti'] ?? [];
+
+        if ($modifiche === [] && $ingredienti === []) {
             return ToolResult::error('Non mi hai detto cosa cambiare.');
         }
 
-        $meal->update($modifiche);
+        if ($modifiche !== []) {
+            $meal->update($modifiche);
+        }
+
+        $quanti = $meal->replaceItems($ingredienti);
 
         return ToolResult::ok(
             "Pasto #{$meal->id} del {$meal->eaten_on->format('d/m/Y')} aggiornato: «{$meal->description}»"
+            .($quanti > 0 ? ", {$quanti} ingredienti" : '')
             .($meal->calories ? ", {$meal->calories} kcal" : '').'.',
             'corretto: '.Str::limit($prima, 24),
         );

@@ -64,13 +64,17 @@ it('somma le calorie degli allenamenti del giorno', function () {
 
 /*
  * Chi ha scritto le calorie guardava un cardiofrequenzimetro; la tabella MET
- * guarda il nome dell'attività. Vince il primo.
+ * guarda il nome dell'attività. Vince il primo — ma al netto del basale di
+ * quei minuti, che è lordo nel numero del cardio ed è già dentro le 24 ore.
  */
 it('preferisce le calorie registrate alla stima da tabella', function () {
     BodyMetric::create(['measured_on' => now(), 'weight_kg' => 80.0]);
     Workout::create(['performed_on' => now(), 'activity' => 'Corsa', 'minutes' => 60, 'calories' => 620]);
 
-    expect(Energy::activityBurn($this->user, CarbonImmutable::now()))->toBe(620);
+    $basaleOra = Energy::basalRate($this->user, 80.0) * 1.20 / 24;
+
+    // Non 704, che è la stima da tabella: quella non viene nemmeno calcolata.
+    expect(Energy::activityBurn($this->user, CarbonImmutable::now()))->toBe((int) round(620 - $basaleOra));
 });
 
 it('somma lo sport al fabbisogno invece di nasconderlo in un fattore', function () {
