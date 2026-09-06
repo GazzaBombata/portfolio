@@ -88,17 +88,22 @@
 
 <table>
     {{--
-        Le larghezze in proporzione: i pasti sono la colonna con dentro delle
-        frasi intere, il piano ne ha di più corte, tutto il resto sono numeri.
-        Sonno, corpo, passi e acqua stanno in una colonna sola per liberare lo
-        spazio — erano quattro colonne di due cifre l'una, con tre quarti di
-        larghezza sprecata in bianco.
+        Le larghezze in proporzione. Il mangiato è diviso in tre colonne — una
+        per pranzo, una per cena, una per colazione e spuntini insieme — così
+        le tre unità che aveva da solo restano tre, ma affiancate: la riga è
+        alta quanto il pasto più lungo invece che quanto la loro somma. Il
+        piano resta doppio.
+
+        Sonno, corpo, passi e acqua stanno in una colonna sola: erano quattro
+        colonne di due cifre l'una, con tre quarti di larghezza in bianco.
     --}}
     <colgroup>
         <col style="width: 11.1%">
         <col style="width: 11.1%">
         <col style="width: 11.1%">
-        <col style="width: 33.4%">
+        <col style="width: 11.1%">
+        <col style="width: 11.1%">
+        <col style="width: 11.1%">
         <col style="width: 22.2%">
         <col style="width: 11.1%">
     </colgroup>
@@ -107,7 +112,9 @@
         <th>Giorno</th>
         <th>Sonno, corpo, passi, acqua</th>
         <th>Allenamenti</th>
-        <th>Mangiato</th>
+        <th>Colazione e spuntini</th>
+        <th>Pranzo</th>
+        <th>Cena</th>
         <th>Piano</th>
         <th>Calorie</th>
     </tr>
@@ -125,7 +132,7 @@
             @if ($riga['vuoto'])
                 {{-- Un giorno vuoto è un'informazione: nasconderlo farebbe
                      sembrare continuo un tracciamento che si è interrotto. --}}
-                <td colspan="5" class="vuoto">niente registrato</td>
+                <td colspan="7" class="vuoto">niente registrato</td>
             @else
                 <td>
                     @php($misure = $riga['sonno'] !== null || $riga['corpo'] !== null || $riga['passi'] !== null || $riga['acqua'] !== null)
@@ -202,23 +209,11 @@
                     @endforeach
                 </td>
 
-                <td>
-                    @forelse ($riga['mangiati'] as $p)
-                        <div class="voce">
-                            <strong>{{ $p['momento'] }}</strong>@if ($p['ora']) <span class="etichetta">{{ $p['ora'] }}</span>@endif
-                            @if ($p['fuori'])<span class="etichetta">· fuori</span>@endif<br>
-                            {{ $p['descrizione'] }}<br>
-                            <span class="macro">
-                                {{ $p['calorie'] !== null ? $kcal($p['calorie']).' kcal' : 'calorie non registrate' }}@if ($p['stimato']) ≈@endif@if ($p['proteine'] !== null) · P {{ $p['proteine'] }} @endif@if ($p['carboidrati'] !== null) · C {{ $p['carboidrati'] }} @endif@if ($p['grassi'] !== null) · G {{ $p['grassi'] }} @endif
-                            </span>
-                            @if (filled($p['note']))
-                                <div class="nota">{{ $p['note'] }}</div>
-                            @endif
-                        </div>
-                    @empty
-                        <span class="nulla">—</span>
-                    @endforelse
-                </td>
+                <td>@include('pdf.pasti', ['pasti' => $riga['mangiati']['colazione'], 'conMomento' => true])</td>
+
+                <td>@include('pdf.pasti', ['pasti' => $riga['mangiati']['pranzo'], 'conMomento' => false])</td>
+
+                <td>@include('pdf.pasti', ['pasti' => $riga['mangiati']['cena'], 'conMomento' => false])</td>
 
                 <td>
                     @forelse ($riga['previsti'] as $p)
@@ -258,7 +253,7 @@
             @endif
         </tr>
     @empty
-        <tr><td colspan="6" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
+        <tr><td colspan="8" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
     @endforelse
     </tbody>
 </table>

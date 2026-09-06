@@ -166,7 +166,7 @@ class Diary
             'acqua' => $log?->water_litres === null ? null : (float) $log->water_litres,
             'aderenza' => $log?->nutrition_adherence,
             'note' => $log?->notes,
-            'mangiati' => $mangiati,
+            'mangiati' => static::perMomento($mangiati),
             'previsti' => $previsti,
             'fatti' => static::allenamenti($fatti),
             'inProgramma' => static::allenamenti($inProgramma),
@@ -269,6 +269,35 @@ class Diary
     }
 
     /**
+     * I pasti mangiati divisi in tre gruppi, uno per colonna del diario.
+     *
+     * Pranzo e cena sono i due pasti che si confrontano con il piano e che
+     * hanno dentro delle frasi intere; colazione e spuntini stanno insieme
+     * perché sono corti e perché uno spuntino senza la colazione accanto non
+     * si legge — «tre mandorle» da solo non dice se quella mattina si è
+     * mangiato. I gruppi ci sono anche vuoti: una colonna «Cena» con dentro
+     * un trattino dice che quel giorno la cena non è registrata, e toglierla
+     * farebbe sembrare completa una giornata a cui manca il pasto principale.
+     *
+     * @param  array<int, array<string, mixed>>  $mangiati
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    private static function perMomento(array $mangiati): array
+    {
+        $gruppi = ['colazione' => [], 'pranzo' => [], 'cena' => []];
+
+        foreach ($mangiati as $pasto) {
+            $gruppi[match ($pasto['chiave']) {
+                'lunch' => 'pranzo',
+                'dinner' => 'cena',
+                default => 'colazione',
+            }][] = $pasto;
+        }
+
+        return $gruppi;
+    }
+
+    /**
      * I pasti nell'ordine in cui si mangiano.
      *
      * @param  Collection<int, Meal>  $pasti
@@ -279,6 +308,7 @@ class Diary
         return $pasti
             ->sortBy(fn (Meal $p): string => sprintf('%d-%s', self::MOMENTI[$p->moment] ?? 9, $p->eaten_at ?? ''))
             ->map(fn (Meal $p): array => [
+                'chiave' => $p->moment,
                 'momento' => self::NOMI_MOMENTI[$p->moment] ?? $p->moment,
                 'ora' => $p->eaten_at === null ? null : substr((string) $p->eaten_at, 0, 5),
                 'descrizione' => $p->description,

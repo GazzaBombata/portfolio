@@ -76,9 +76,42 @@ it('mette nella riga tutto quello che quel giorno ha dentro', function () {
         ->and($riga['passi'])->toBe(11000)
         ->and($riga['acqua'])->toBe(2.5)
         ->and($riga['aderenza'])->toBe(8)
-        ->and($riga['mangiati'][0]['descrizione'])->toBe('Pasta al pomodoro')
+        ->and($riga['mangiati']['pranzo'][0]['descrizione'])->toBe('Pasta al pomodoro')
         ->and($riga['previsti'][0]['descrizione'])->toBe('Riso e pollo')
         ->and($riga['fatti'][0]['esercizi'][0])->toBe('panca 4×8 a 60 kg');
+});
+
+/*
+ * Il mangiato sta in tre colonne, e colazione e spuntini stanno insieme: un
+ * «tre mandorle» da solo non dice se quella mattina si è fatta colazione.
+ */
+it('divide il mangiato in pranzo, cena e il resto', function () {
+    $giorno = '2026-03-20';
+
+    foreach ([
+        ['breakfast', 'Yogurt e caffè'],
+        ['snack', 'Tre mandorle'],
+        ['lunch', 'Pasta al pomodoro'],
+        ['dinner', 'Pollo e insalata'],
+    ] as [$momento, $cosa]) {
+        Meal::create(['kind' => 'eaten', 'eaten_on' => $giorno, 'moment' => $momento, 'description' => $cosa]);
+    }
+
+    // Un pasto previsto non deve finire in nessuna delle tre: il piano è
+    // un'altra colonna, e sommarlo qui conterebbe due volte la giornata.
+    Meal::create(['kind' => 'planned', 'eaten_on' => $giorno, 'moment' => 'lunch', 'description' => 'Riso e pollo']);
+
+    $mangiati = Diary::between($this->user, CarbonImmutable::parse($giorno), CarbonImmutable::parse($giorno))[0]['mangiati'];
+
+    expect(array_column($mangiati['colazione'], 'descrizione'))->toBe(['Yogurt e caffè', 'Tre mandorle'])
+        ->and(array_column($mangiati['pranzo'], 'descrizione'))->toBe(['Pasta al pomodoro'])
+        ->and(array_column($mangiati['cena'], 'descrizione'))->toBe(['Pollo e insalata']);
+});
+
+it('tiene i tre gruppi anche quando sono vuoti', function () {
+    $mangiati = Diary::between($this->user, CarbonImmutable::parse('2026-03-21'), CarbonImmutable::parse('2026-03-21'))[0]['mangiati'];
+
+    expect($mangiati)->toBe(['colazione' => [], 'pranzo' => [], 'cena' => []]);
 });
 
 /*
