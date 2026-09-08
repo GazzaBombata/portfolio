@@ -195,13 +195,13 @@ class Diary
     private static function calorie(User $user, CarbonImmutable $giorno, ?DailyLog $log, array $mangiati): array
     {
         $mangiate = $mangiati === [] ? null : Energy::intake($giorno);
-        $fabbisogno = static::fabbisogno($user, $giorno, $log);
+        [$fabbisogno, $attivita] = static::fabbisogno($user, $giorno, $log);
 
         return [
             'mangiate' => $mangiate,
             'obiettivo' => Energy::target($giorno),
             'fabbisogno' => $fabbisogno,
-            'attivita' => $log?->activity_calories !== null ? (int) $log->activity_calories : Energy::activityBurn($user, $giorno),
+            'attivita' => $attivita,
             'bilancio' => $fabbisogno === null || $mangiate === null ? null : $mangiate - $fabbisogno,
         ];
     }
@@ -218,14 +218,24 @@ class Diary
      * Si ricalcola solo quando in tabella non c'è niente, o quando quella
      * colonna sta ospitando un obiettivo scritto a mano: `targets_manual`
      * vuol dire che il valore lì dentro è un obiettivo, non un fabbisogno.
+     *
+     * **Il totale e la sua parte di attività escono da qui insieme**, e non è
+     * un dettaglio. Il fabbisogno può essere quello salvato allora e le
+     * calorie di attività quelle salvate allora, oppure tutti e due ricalcolati
+     * adesso — ma mai uno per uno. Presi da due epoche diverse producono una
+     * riga come «fabbisogno 2.964, di cui 750 di attività» dove 2.964 quei 750
+     * non li contiene: una ripartizione che non torna col totale è peggio di
+     * nessuna ripartizione, perché nessuno può accorgersene rifacendo il conto.
+     *
+     * @return array{0: ?int, 1: int} fabbisogno e calorie dell'attività, dalla stessa fonte
      */
-    private static function fabbisogno(User $user, CarbonImmutable $giorno, ?DailyLog $log): ?int
+    private static function fabbisogno(User $user, CarbonImmutable $giorno, ?DailyLog $log): array
     {
         if ($log !== null && $log->target_calories !== null && ! $log->targets_manual) {
-            return (int) $log->target_calories;
+            return [(int) $log->target_calories, (int) ($log->activity_calories ?? 0)];
         }
 
-        return Energy::dailyNeed($user, $giorno);
+        return [Energy::dailyNeed($user, $giorno), Energy::activityBurn($user, $giorno)];
     }
 
     /**

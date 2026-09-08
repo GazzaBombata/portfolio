@@ -2,6 +2,7 @@
 
 use App\Filament\Pages\HealthDiary;
 use App\Health\Diary;
+use App\Health\Energy;
 use App\Models\BodyMetric;
 use App\Models\DailyLog;
 use App\Models\Meal;
@@ -167,4 +168,34 @@ it('non scarica niente se l\'intervallo è al contrario', function () {
         ->fillForm(['dal' => '2026-03-14', 'al' => '2026-03-12'])
         ->call('scarica')
         ->assertNotified();
+});
+
+/*
+ * «Fabbisogno 2.964, di cui 750 di attività» dove 2.964 quei 750 non li
+ * contiene: succedeva quando il totale veniva ricalcolato adesso e la sua parte
+ * di attività veniva letta da quella salvata mesi fa. Una ripartizione che non
+ * torna col totale è peggio di nessuna ripartizione — nessuno può accorgersene
+ * rifacendo il conto, perché il conto non si può rifare.
+ */
+it('prende il fabbisogno e la sua quota di attività dalla stessa fonte', function () {
+    $giorno = '2026-03-30';
+
+    BodyMetric::create(['measured_on' => $giorno, 'weight_kg' => 90.0]);
+    Workout::create(['kind' => 'done', 'performed_on' => $giorno, 'activity' => 'Bici', 'minutes' => 60]);
+
+    // Una riga vecchia: un obiettivo scritto a mano in target_calories, e
+    // accanto delle calorie di attività di un'altra epoca.
+    // updateOrCreate: l'observer sull'allenamento la riga l'ha già creata.
+    DailyLog::updateOrCreate(['logged_on' => $giorno], [
+        'targets_manual' => true, 'target_calories' => 1800, 'activity_calories' => 999,
+    ]);
+
+    $calorie = Diary::between($this->user, CarbonImmutable::parse($giorno), CarbonImmutable::parse($giorno))[0]['calorie'];
+
+    // Il fabbisogno è ricalcolato, quindi anche l'attività: i 999 salvati non
+    // entrano, e la differenza col basale torna esattamente.
+    expect($calorie['attivita'])->toBe(Energy::activityBurn($this->user, CarbonImmutable::parse($giorno)))
+        ->and($calorie['attivita'])->not->toBe(999)
+        ->and($calorie['fabbisogno'] - $calorie['attivita'])
+        ->toBe((int) round(Energy::basalRate($this->user, 90.0) * (float) $this->user->activity_factor));
 });
