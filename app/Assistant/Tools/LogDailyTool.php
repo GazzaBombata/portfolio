@@ -27,10 +27,17 @@ class LogDailyTool implements ChangesSomething, Tool
             'type' => 'object',
             'properties' => [
                 'giorno' => ['type' => 'string', 'description' => 'AAAA-MM-GG'],
-                'passi' => ['type' => ['integer', 'null'], 'description' => 'I passi del giorno, come li legge il telefono.'],
+                'passi' => ['type' => ['integer', 'null'], 'description' => 'I passi del giorno, come li legge il telefono. SEMPRE qui, mai nella nota: da lì non li conta nessuno.'],
                 'acqua_litri' => ['type' => ['number', 'null']],
                 'aderenza_piano' => ['type' => ['integer', 'null'], 'description' => 'Da 1 (per niente) a 10 (alla lettera)'],
-                'note' => ['type' => ['string', 'null']],
+                // Il campo senza descrizione è diventato il posto dove finiva
+                // tutto: fra il 26 e il 29/08/2026 i passi di quattro giornate
+                // sono stati scritti qui dentro come «7000 passi», e nel
+                // fabbisogno hanno contato zero.
+                'note' => [
+                    'type' => ['string', 'null'],
+                    'description' => 'Il contorno della giornata a parole: com\'è andata, cos\'è successo. NON i numeri — passi, acqua e aderenza hanno il loro campo, e scritti qui non entrano in nessun conto.',
+                ],
             ],
             'required' => ['giorno'],
         ];
@@ -39,6 +46,30 @@ class LogDailyTool implements ChangesSomething, Tool
     public function run(array $input): ToolResult
     {
         $giorno = CarbonImmutable::parse($input['giorno']);
+
+        /*
+         * Un numero di passi nella nota, e il campo vuoto: si torna indietro.
+         *
+         * Non è un'ipotesi. Dal 25 al 29/08/2026 i passi sono stati detti in
+         * chat tutti i giorni e sono finiti quattro volte qui — «7000 passi»,
+         * «Passi: 7000» — e una quinta nella descrizione di un allenamento.
+         * La riga della giornata esisteva, con dentro l'acqua; il campo
+         * `steps` era null. Risultato: `Energy::stepsBurn()` leggeva zero, e
+         * il fabbisogno di quei giorni usciva più basso del vero senza che
+         * niente lo dicesse — un dato raccolto, scritto, e perso in tabella.
+         *
+         * Correggerlo di nascosto sarebbe indovinare a quale numero della
+         * frase si riferisce; chiedere costa un giro e lascia la scelta a chi
+         * i passi li ha fatti.
+         */
+        $nota = (string) ($input['note'] ?? '');
+
+        if (! filled($input['passi'] ?? null) && preg_match('/\d[\d.\s]*\s*passi|passi\s*[:=]?\s*\d/iu', $nota) === 1) {
+            return ToolResult::error(
+                'Nella nota c\'è un numero di passi ma il campo «passi» è vuoto: scritti lì dentro non li conta nessuno, '
+                .'e il fabbisogno del giorno esce più basso del vero. Rifai la chiamata passando i passi nel loro campo.',
+            );
+        }
 
         $log = DailyLog::updateOrCreate(
             ['logged_on' => $giorno->toDateString()],

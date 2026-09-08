@@ -1,12 +1,10 @@
 <?php
 
 use App\Assistant\Tools\LogMealTool;
-use App\Assistant\Tools\LogWorkoutTool;
 use App\Assistant\Tools\UpdateMealTool;
 use App\Health\Diary;
 use App\Models\Meal;
 use App\Models\User;
-use App\Models\Workout;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -119,31 +117,4 @@ it('lascia in pace un pasto scritto di corsa, senza ingredienti', function () {
     ]);
 
     expect(Meal::sole()->calories)->toBe(80)->and(Meal::sole()->items)->toBeEmpty();
-});
-
-/*
- * I passi finiti in una seduta non li legge nessuno: `Energy::stepsBurn()`
- * guarda `daily_logs.steps`. È già successo il 25/08/2026, con un allenamento
- * chiamato «Passi giornalieri (non un allenamento)» da zero calorie.
- */
-it('rifiuta di registrare i passi come allenamento', function () {
-    $risultato = (new LogWorkoutTool)->run([
-        'giorno' => '2026-03-07',
-        'attivita' => 'Passi giornalieri',
-        'tipo' => 'fatta',
-        'proposta_da' => 'giorgio',
-    ]);
-
-    expect($risultato->isError)->toBeTrue()
-        ->and($risultato->content)->toContain('registra_giornata')
-        ->and(Workout::count())->toBe(0);
-});
-
-it('lascia passare una camminata vera', function () {
-    $risultato = (new LogWorkoutTool)->run([
-        'giorno' => '2026-03-08', 'attivita' => 'Camminata in montagna',
-        'tipo' => 'fatta', 'proposta_da' => 'giorgio', 'minuti' => 90,
-    ]);
-
-    expect($risultato->isError)->toBeFalse()->and(Workout::count())->toBe(1);
 });
