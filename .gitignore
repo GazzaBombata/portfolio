@@ -34,3 +34,6 @@ Thumbs.db
 
 # Estratti conto: dati bancari, non finiscono nel repo
 /storage/app/private/statements
+
+# Gli screenshot dei test del browser si rifanno a ogni giro.
+/tests/Browser/Screenshots

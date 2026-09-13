@@ -199,3 +199,82 @@ it('prende il fabbisogno e la sua quota di attività dalla stessa fonte', functi
         ->and($calorie['fabbisogno'] - $calorie['attivita'])
         ->toBe((int) round(Energy::basalRate($this->user, 90.0) * (float) $this->user->activity_factor));
 });
+
+/*
+ * La griglia scrive nelle tre tabelle che hanno un valore solo al giorno, e
+ * quelle hanno tutte un indice unico sulla data: correggere una cella corregge
+ * la riga di quel giorno invece di aggiungerne una seconda.
+ */
+it('scrive nella tabella giusta quando si corregge una cella', function () {
+    $pagina = Livewire::test(HealthDiary::class)
+        ->call('salva', '2026-04-01', 'minuti', '430')
+        ->call('salva', '2026-04-01', 'qualita', '4')
+        ->call('salva', '2026-04-01', 'peso', '94,4')
+        ->call('salva', '2026-04-01', 'passi', '9200')
+        ->call('salva', '2026-04-01', 'acqua', '2.5')
+        ->call('salva', '2026-04-01', 'aderenza', '8')
+        ->call('salva', '2026-04-01', 'note', 'Giornata storta');
+
+    $pagina->assertSuccessful();
+
+    expect(SleepLog::sole()->minutes)->toBe(430)
+        ->and(SleepLog::sole()->quality)->toBe(4)
+        // La notte è datata alla sera in cui è cominciata, come nel PDF.
+        ->and(SleepLog::sole()->night_of->toDateString())->toBe('2026-04-01')
+        ->and((float) BodyMetric::sole()->weight_kg)->toBe(94.4)
+        ->and(DailyLog::sole()->steps)->toBe(9200)
+        ->and((float) DailyLog::sole()->water_litres)->toBe(2.5)
+        ->and(DailyLog::sole()->nutrition_adherence)->toBe(8)
+        ->and(DailyLog::sole()->notes)->toBe('Giornata storta');
+});
+
+it('corregge invece di duplicare quando si riscrive la stessa cella', function () {
+    Livewire::test(HealthDiary::class)
+        ->call('salva', '2026-04-02', 'passi', '9000')
+        ->call('salva', '2026-04-02', 'passi', '11000');
+
+    expect(DailyLog::count())->toBe(1)->and(DailyLog::sole()->steps)->toBe(11000);
+});
+
+it('svuota il dato quando si svuota la cella', function () {
+    Livewire::test(HealthDiary::class)
+        ->call('salva', '2026-04-03', 'passi', '9000')
+        ->call('salva', '2026-04-03', 'passi', '');
+
+    expect(DailyLog::sole()->steps)->toBeNull();
+});
+
+/*
+ * Svuotare una cella di un giorno che non ha una riga non deve crearne una
+ * vuota: una tabella piena di righe che non dicono niente fa smettere di
+ * significare qualcosa a «quanti giorni ho tracciato».
+ */
+it('non crea una riga vuota svuotando una cella che non c\'era', function () {
+    Livewire::test(HealthDiary::class)->call('salva', '2026-04-04', 'passi', '');
+
+    expect(DailyLog::count())->toBe(0);
+});
+
+/*
+ * Un peso di 940 kg battuto di fretta si vede per sempre in un grafico. Si
+ * rifiuta parlando, invece di lanciare: una pagina che va in errore perde anche
+ * le altre celle aperte.
+ */
+it('rifiuta un valore fuori intervallo senza scriverlo', function () {
+    Livewire::test(HealthDiary::class)
+        ->call('salva', '2026-04-05', 'peso', '940')
+        ->assertNotified();
+
+    expect(BodyMetric::count())->toBe(0);
+});
+
+it('rimette in pari il fabbisogno del giorno quando si correggono i passi', function () {
+    BodyMetric::create(['measured_on' => '2026-04-06', 'weight_kg' => 90.0]);
+
+    Livewire::test(HealthDiary::class)->call('salva', '2026-04-06', 'passi', '12000');
+
+    // I passi entrano nel fabbisogno: la copia salvata sulla giornata non deve
+    // restare indietro rispetto a quella calcolata.
+    expect(DailyLog::sole()->target_calories)
+        ->toBe(Energy::dailyNeed($this->user, CarbonImmutable::parse('2026-04-06')));
+});

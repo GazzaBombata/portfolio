@@ -362,6 +362,21 @@ strani.
   **derivato**: scriverlo a mano accanto alle righe sarebbe il secondo posto
   per la stessa cosa. Null non è zero — se nessun ingrediente ha le calorie il
   pasto resta «non registrate», perché uno zero abbasserebbe la giornata.
+- **La griglia del diario si corregge in cella, ma solo dove c'è un valore al
+  giorno.** È lì che i buchi si vedono — una colonna di passi con cinque celle
+  vuote si legge in un colpo d'occhio — e riempirle da lì costa un clic invece
+  di cinque schermate. Modificabili sono sonno, peso, passi, acqua, aderenza e
+  la nota: tutte cose con un indice unico sulla data, quindi scrivere corregge
+  invece di duplicare. **Pasti e allenamenti restano in sola lettura**: sono
+  elenchi, non caselle, e metterne uno in una cella vorrebbe dire scegliere
+  quale dei tre mostrare. Svuotare una cella di un giorno che non ha una riga
+  non ne crea una vuota, altrimenti «quanti giorni ho tracciato» smetterebbe di
+  voler dire qualcosa. Correggere passi o peso **ricalcola quel giorno**, come
+  fa `registra_giornata` quando i passi arrivano dalla chat: non è il ricalcolo
+  dello storico, è un giorno su cui qualcuno ha appena messo le mani. La
+  griglia disegna al massimo 90 righe e **lo dichiara sotto la tabella**, con
+  il numero vero dell'intervallo accanto: un pezzo spacciato per l'insieme è il
+  modo in cui nasce un conto sbagliato. Il PDF li contiene tutti.
 - **Il diario in PDF tiene i giorni vuoti e non scrive zero.** Una riga per
   giorno dal più vecchio al più recente è la forma che esce dal pannello — da
   un nutrizionista si sfoglia una tabella, non cinque elenchi filtrati. Da lì
@@ -383,6 +398,12 @@ sail up -d                     # ambiente
 sail artisan migrate
 sail artisan test              # Pest
 sail pint                      # lint
+
+# I test del browser NON girano in Sail: Playwright e il suo Chromium stanno
+# sul portatile, non nel container, e il DB va raggiunto dalle porte host.
+npx playwright install chromium   # una volta sola
+DB_HOST=127.0.0.1 DB_PORT=$FORWARD_DB_PORT REDIS_HOST=127.0.0.1 REDIS_PORT=$FORWARD_REDIS_PORT \
+  php artisan test tests/Browser
 sail artisan queue:work        # serve all'assistente
 
 # Spese

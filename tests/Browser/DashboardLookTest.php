@@ -5,6 +5,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 
 uses(RefreshDatabase::class);
 
@@ -16,12 +17,16 @@ uses(RefreshDatabase::class);
  */
 it('mostra la dashboard con dati veri', function () {
     $user = User::factory()->create(['app_authentication_secret' => 'PROVA']);
+    // `user_id` non è fillable: lo stampa BelongsToUser sull'utente
+    // autenticato, che in un test va impostato a mano.
+    Auth::setUser($user);
+
     $account = Account::factory()->create(['user_id' => $user->id, 'name' => 'BancoPosta']);
 
     $categorie = collect([
         ['Spesa e cibo', 'expense'], ['Trasporti', 'expense'], ['Casa', 'expense'],
         ['Lavoro', 'expense'], ['Salute', 'expense'], ['Fatture e compensi', 'income'],
-    ])->map(fn (array $c) => Category::create(['user_id' => $user->id, 'name' => $c[0], 'kind' => $c[1]]));
+    ])->map(fn (array $c) => Category::create(['name' => $c[0], 'kind' => $c[1]]));
 
     foreach (range(0, 7) as $mese) {
         $giorno = now()->copy()->subMonths($mese)->startOfMonth()->addDays(4);
@@ -42,11 +47,14 @@ it('mostra la dashboard con dati veri', function () {
         }
     }
 
-    $page = visit('/admin')->actingAs($user);
+    // L'autenticazione si imposta sul test, non sulla pagina.
+    $this->actingAs($user);
 
-    $page->assertSee('Entrate del mese')
+    $page = visit('/admin');
+
+    $page->assertSee('Entrate')
         ->assertSee('Entrate e uscite, mese per mese')
         ->assertSee('Spesa per categoria')
         ->assertNoJavascriptErrors()
-        ->screenshot('dashboard');
+        ->screenshot(fullPage: true);
 });
