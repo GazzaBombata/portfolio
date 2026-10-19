@@ -49,7 +49,13 @@ class ClaudeClassifier implements Classifier
                 maxTokens: 16000,
                 system: $this->system($categories),
                 messages: [['role' => 'user', 'content' => $this->prompt($merchants)]],
-                outputConfig: ['format' => ['type' => 'json_schema', 'schema' => self::SCHEMA]],
+                // Detto esplicitamente: Opus 5.5 scende da solo a `medium`, un
+                // gradino sotto Opus 5, e classificare è proprio il lavoro per
+                // cui qui si paga Opus — uno sbaglio finisce nei report in silenzio.
+                outputConfig: [
+                    'format' => ['type' => 'json_schema', 'schema' => self::SCHEMA],
+                    'effort' => 'high',
+                ],
             );
         } catch (Throwable $e) {
             Log::warning('Classificazione automatica fallita', ['errore' => $e->getMessage()]);
@@ -60,7 +66,7 @@ class ClaudeClassifier implements Classifier
         /*
          * Perché lo stop va guardato prima di leggere la risposta.
          *
-         * Su Opus 5 il ragionamento è attivo per impostazione predefinita e
+         * Su Opus 5 e 5.5 il ragionamento è attivo per impostazione predefinita e
          * consuma il tetto dei token insieme all'output. Superato quello, la
          * risposta è tagliata a metà: il JSON non si chiude, la lettura
          * restituisce una lista vuota, e la passata sembra semplicemente non

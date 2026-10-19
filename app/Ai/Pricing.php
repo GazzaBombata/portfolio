@@ -15,19 +15,32 @@ class Pricing
 {
     /**
      * Prezzo per milione di token. La scrittura in cache costa 1,25× l'input e
-     * la lettura un decimo: è il conto che decide se conviene cachare, quindi
-     * sta scritto qui invece che dedotto ogni volta.
+     * la lettura di solito un decimo: è il conto che decide se conviene
+     * cachare, quindi sta scritto qui invece che dedotto ogni volta — e infatti
+     * non è sempre un decimo.
      *
      * @var array<string, array{input: float, output: float, cache_read: float, cache_write: float}>
      */
     private const LISTINO = [
-        'claude-opus-5' => ['input' => 5.00, 'output' => 25.00, 'cache_read' => 0.50, 'cache_write' => 6.25],
-        'claude-sonnet-5' => ['input' => 2.00, 'output' => 10.00, 'cache_read' => 0.20, 'cache_write' => 2.50],
-        'claude-haiku-4-5' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10, 'cache_write' => 1.25],
-        // Le versioni datate sono lo stesso modello dell'alias qui sopra:
-        // stanno in listino come rete di sicurezza, se un giorno una chiamata
-        // arriva con l'id esteso invece che con l'alias.
-        'claude-haiku-4-5-20251001' => ['input' => 1.00, 'output' => 5.00, 'cache_read' => 0.10, 'cache_write' => 1.25],
+        // La lettura in cache di Opus 5.5 è un ventesimo dell'input, non un decimo.
+        'claude-opus-5-5' => ['input' => 4.00, 'output' => 20.00, 'cache_read' => 0.20, 'cache_write' => 5.00],
+        'claude-sonnet-5-5' => ['input' => 2.00, 'output' => 10.00, 'cache_read' => 0.20, 'cache_write' => 2.50],
+        'claude-haiku-5-5' => ['input' => 0.10, 'output' => 0.50, 'cache_read' => 0.01, 'cache_write' => 0.125],
+    ];
+
+    /**
+     * Oltre questa soglia di prompt alcuni modelli cambiano listino per
+     * l'INTERA chiamata, non solo per i token in più.
+     *
+     * Haiku 5.5 costa un decimo di Haiku 4.5 sotto i 100K token e la metà
+     * sopra. La chat non ci arriva — la storia è tagliata a dodici messaggi —
+     * ma un conteggio che lo ignorasse sbaglierebbe di cinque volte proprio
+     * nella chiamata più cara, cioè dove il tetto mensile serve.
+     *
+     * @var array<string, array{soglia: int, input: float, output: float, cache_read: float, cache_write: float}>
+     */
+    private const PROMPT_LUNGO = [
+        'claude-haiku-5-5' => ['soglia' => 100_000, 'input' => 0.50, 'output' => 2.50, 'cache_read' => 0.05, 'cache_write' => 0.625],
     ];
 
     /**
@@ -60,6 +73,11 @@ class Pricing
         self::ensurePriced($model);
 
         $p = self::LISTINO[$model];
+
+        $lungo = self::PROMPT_LUNGO[$model] ?? null;
+        if ($lungo !== null && $input + $cacheRead + $cacheWrite > $lungo['soglia']) {
+            $p = $lungo;
+        }
 
         return round(
             $input / 1_000_000 * $p['input']

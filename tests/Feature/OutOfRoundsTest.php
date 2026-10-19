@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
-    $this->runner = new Runner('chiave-finta', 'claude-opus-5');
+    $this->runner = new Runner('chiave-finta', 'claude-opus-5-5');
 });
 
 function metodo(string $nome): ReflectionMethod

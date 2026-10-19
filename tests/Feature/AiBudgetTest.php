@@ -11,13 +11,21 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => $this->actingAs(User::factory()->create()));
 
 it('calcola il costo di una chiamata dai token', function () {
-    // Opus 5: 5 $ per milione in ingresso, 25 in uscita.
-    expect(Pricing::cost('claude-opus-5', 1_000_000, 100_000))->toBe(7.5);
+    // Opus 5.5: 4 $ per milione in ingresso, 20 in uscita.
+    expect(Pricing::cost('claude-opus-5-5', 1_000_000, 100_000))->toBe(6.0);
 
-    // La scrittura in cache costa più dell'input, la lettura un decimo: se
+    // La scrittura in cache costa più dell'input, la lettura molto meno: se
     // finissero entrambe a zero la cache sembrerebbe gratis, e il tetto
     // mensile guarderebbe un numero più basso di quello vero.
-    expect(Pricing::cost('claude-opus-5', 0, 0, 1_000_000, 1_000_000))->toBe(6.75);
+    expect(Pricing::cost('claude-opus-5-5', 0, 0, 1_000_000, 1_000_000))->toBe(5.2);
+});
+
+it('fa pagare a Haiku 5.5 il listino lungo su tutta la chiamata oltre i 100K token', function () {
+    expect(Pricing::cost('claude-haiku-5-5', 100_000, 10_000))->toBe(0.015)
+        // Un token sopra la soglia e cambia il prezzo di tutti, non solo di quello.
+        ->and(Pricing::cost('claude-haiku-5-5', 100_001, 10_000))->toBe(0.075001)
+        // La cache conta nella lunghezza del prompt: è prompt anche lei.
+        ->and(Pricing::cost('claude-haiku-5-5', 1_000, 0, 100_000))->toBe(0.0055);
 });
 
 /*
@@ -31,7 +39,7 @@ it('rifiuta un modello di cui non conosce il prezzo', function () {
 
 it('lascia passare finché il tetto non è raggiunto', function () {
     config(['ai.monthly_limit' => 10]);
-    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5', 'cost' => 3.0]);
+    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5-5', 'cost' => 3.0]);
 
     Budget::guard();
 
@@ -40,7 +48,7 @@ it('lascia passare finché il tetto non è raggiunto', function () {
 
 it('si ferma con un errore che dice quanto è stato speso', function () {
     config(['ai.monthly_limit' => 10]);
-    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5', 'cost' => 10.5]);
+    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5-5', 'cost' => 10.5]);
 
     expect(fn () => Budget::guard())
         ->toThrow(RuntimeException::class, 'Tetto di spesa AI raggiunto');
@@ -48,7 +56,7 @@ it('si ferma con un errore che dice quanto è stato speso', function () {
 
 it('conta solo il mese in corso', function () {
     config(['ai.monthly_limit' => 10]);
-    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5', 'cost' => 50.0])
+    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5-5', 'cost' => 50.0])
         ->forceFill(['created_at' => now()->subMonths(2)])->save();
 
     Budget::guard();
@@ -58,7 +66,7 @@ it('conta solo il mese in corso', function () {
 
 it('senza limite configurato non blocca niente', function () {
     config(['ai.monthly_limit' => 0]);
-    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5', 'cost' => 9999.0]);
+    AiUsage::create(['kind' => 'test', 'model' => 'claude-opus-5-5', 'cost' => 9999.0]);
 
     Budget::guard();
 
@@ -68,8 +76,8 @@ it('senza limite configurato non blocca niente', function () {
 it('registra una chiamata con il costo calcolato al momento', function () {
     $usage = (object) ['inputTokens' => 200_000, 'outputTokens' => 20_000, 'cacheReadInputTokens' => 0];
 
-    $riga = Budget::record('assistente', 'claude-opus-5', $usage);
+    $riga = Budget::record('assistente', 'claude-opus-5-5', $usage);
 
-    expect((float) $riga->cost)->toBe(1.5)
+    expect((float) $riga->cost)->toBe(1.2)
         ->and($riga->kind)->toBe('assistente');
 });
