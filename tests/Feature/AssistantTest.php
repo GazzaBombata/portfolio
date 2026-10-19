@@ -270,7 +270,7 @@ it('ferma un turno in corso senza cancellare quello che ha già fatto', function
  * processi è la riga sul database.
  */
 it('chiude il turno dicendo che è stato fermato', function () {
-    $runner = new Runner('chiave-finta', 'claude-opus-5');
+    $runner = new Runner('chiave-finta', 'claude-opus-5-5');
 
     $esito = $runner->run('qualcosa', Topic::Finance, fn (): bool => true);
 
@@ -288,8 +288,8 @@ it('chiude il turno dicendo che è stato fermato', function () {
 it('offre solo i modelli che hanno un prezzo', function () {
     $opzioni = array_keys(Livewire::test(FinanceAssistant::class)->get('modelOptions'));
 
-    expect($opzioni)->toContain('claude-opus-5')
-        ->and($opzioni)->toContain('claude-haiku-4-5')
+    expect($opzioni)->toContain('claude-opus-5-5')
+        ->and($opzioni)->toContain('claude-haiku-5-5')
         // La variante datata è lo stesso modello dell'alias: nel menu una volta sola.
         ->and($opzioni)->not->toContain('claude-haiku-4-5-20251001');
 
@@ -304,15 +304,15 @@ it('parte dal modello predefinito e ricorda quello scelto', function () {
     expect(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe(config('ai.assistant_model'));
 
     Livewire::test(HealthAssistant::class)
-        ->set('chatModel', 'claude-haiku-4-5')
+        ->set('chatModel', 'claude-haiku-5-5')
         ->set('question', 'ieri ho corso')
         ->call('send');
 
-    expect(AssistantMessage::where('role', 'assistant')->latest('id')->value('model'))->toBe('claude-haiku-4-5')
+    expect(AssistantMessage::where('role', 'assistant')->latest('id')->value('model'))->toBe('claude-haiku-5-5')
         // Riaprendo la pagina il menu riparte da lì, non dal predefinito.
-        ->and(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe('claude-haiku-4-5');
+        ->and(Livewire::test(HealthAssistant::class)->get('chatModel'))->toBe('claude-haiku-5-5');
 
-    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === 'claude-haiku-4-5');
+    Queue::assertPushed(RunAssistantTurn::class, fn ($job): bool => $job->model === 'claude-haiku-5-5');
 });
 
 it('ignora un modello non in elenco arrivato dal browser', function () {
@@ -331,7 +331,7 @@ it('ignora un modello non in elenco arrivato dal browser', function () {
 it('riconosce la variante datata di un modello', function () {
     expect(ModelCatalog::isKnownAs('claude-haiku-4-5-20251001', ['claude-haiku-4-5']))->toBeTrue()
         ->and(ModelCatalog::isKnownAs('claude-haiku-4-5', ['claude-haiku-4-5-20251001']))->toBeTrue()
-        ->and(ModelCatalog::isKnownAs('claude-opus-5', ['claude-haiku-4-5']))->toBeFalse();
+        ->and(ModelCatalog::isKnownAs('claude-opus-5-5', ['claude-haiku-5-5']))->toBeFalse();
 });
 
 it('non chiede il catalogo ad Anthropic senza chiave', function () {

@@ -6,7 +6,7 @@ return [
      */
     'key' => env('ANTHROPIC_API_KEY', ''),
 
-    'model' => env('AI_MODEL', 'claude-opus-5'),
+    'model' => env('AI_MODEL', 'claude-opus-5-5'),
 
     /*
      * Il modello della chat, tenuto separato da quello che classifica.
@@ -20,7 +20,7 @@ return [
      * Non è una scelta definitiva: il menu in cima alla conversazione la
      * cambia in un clic, e la scelta resta su quella chat.
      */
-    'assistant_model' => env('AI_ASSISTANT_MODEL', 'claude-sonnet-5'),
+    'assistant_model' => env('AI_ASSISTANT_MODEL', 'claude-sonnet-5-5'),
 
     /*
      * Le etichette del menu «Modello» nella chat, id => testo.
@@ -31,9 +31,9 @@ return [
      * chiamata viene rifiutata prima di spendere un token, apposta.
      */
     'assistant_models' => [
-        'claude-opus-5' => 'Opus 5 — ragiona meglio',
-        'claude-sonnet-5' => 'Sonnet 5 — equilibrato',
-        'claude-haiku-4-5' => 'Haiku 4.5 — il più economico',
+        'claude-opus-5-5' => 'Opus 5.5 — ragiona meglio',
+        'claude-sonnet-5-5' => 'Sonnet 5.5 — equilibrato',
+        'claude-haiku-5-5' => 'Haiku 5.5 — il più economico',
     ],
 
     /*
