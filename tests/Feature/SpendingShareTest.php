@@ -97,7 +97,15 @@ it('segue i filtri della pagina', function () {
 });
 
 it('regge un periodo senza nessuna spesa', function () {
+    // Le categorie ci sono, le spese no: è l'unico vuoto che il riquadro vede,
+    // perché senza categorie canView() lo nasconde e Filament rifiuta di montarlo.
+    Category::create(['name' => 'Casa', 'kind' => 'expense']);
+
     expect(dati()['labels'])->toBe([]);
+});
+
+it('non si monta finché non esiste una categoria di spesa', function () {
+    Livewire::test(SpendingShareChart::class, ['pageFilters' => ['periodo' => 'tutto']])->assertForbidden();
 });
 
 it('apre il riquadro senza errori', function () {
