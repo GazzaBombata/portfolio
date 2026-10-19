@@ -112,11 +112,14 @@
              dompdf i <col> li ignora, e con il layout fisso legge la prima
              riga. Con il colgroup le colonne uscivano tutte uguali. --}}
         @if ($sintesi)
-            <th style="width: 9%">Giorno</th>
-            <th style="width: 17%">Sonno, corpo, passi, acqua</th>
-            <th style="width: 17%">Allenamenti</th>
-            <th style="width: 8%">Piano seguito</th>
-            <th style="width: 49%">Fuori piano</th>
+            <th style="width: 8.5%">Giorno</th>
+            <th style="width: 8%">Sonno</th>
+            <th style="width: 6%">Peso</th>
+            <th style="width: 5.5%">Passi</th>
+            <th style="width: 5%">Acqua</th>
+            <th style="width: 15%">Allenamenti</th>
+            <th style="width: 7%">Piano seguito</th>
+            <th style="width: 45%">Fuori piano</th>
         @else
             <th style="width: 10.5%">Giorno</th>
             <th style="width: 10.5%">Sonno, corpo, passi, acqua</th>
@@ -143,8 +146,42 @@
             @if ($riga['vuoto'])
                 {{-- Un giorno vuoto è un'informazione: nasconderlo farebbe
                      sembrare continuo un tracciamento che si è interrotto. --}}
-                <td colspan="{{ $sintesi ? 4 : 8 }}" class="vuoto">niente registrato</td>
+                <td colspan="{{ $sintesi ? 7 : 8 }}" class="vuoto">niente registrato</td>
             @else
+                @if ($sintesi)
+                    {{-- Quattro colonne strette invece di una: messe in fila
+                         si leggono scorrendo giù, ed è così che si guarda un
+                         peso o una media di passi. C'è spazio perché i pasti
+                         qui non ci sono. --}}
+                    <td class="num">
+                        @if ($riga['sonno'] !== null)
+                            {{ $ore($riga['sonno']['minuti']) }}@if ($riga['sonno']['qualita'] !== null)<br><span class="etichetta">qualità {{ $riga['sonno']['qualita'] }}/5</span>@endif
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['corpo'] !== null && $riga['corpo']['peso'] !== null)
+                            {{ $dec($riga['corpo']['peso']) }} kg
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['passi'] !== null)
+                            {{ number_format($riga['passi'], 0, ',', '.') }}
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['acqua'] !== null)
+                            {{ $dec($riga['acqua'], 2) }} l
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                @else
                 <td>
                     @php($misure = $riga['sonno'] !== null || $riga['corpo'] !== null || $riga['passi'] !== null || $riga['acqua'] !== null)
 
@@ -185,6 +222,8 @@
                         <div class="voce"><span class="etichetta">acqua</span> {{ $dec($riga['acqua'], 2) }} litri</div>
                     @endif
                 </td>
+
+                @endif
 
                 <td>
                     @forelse ($riga['fatti'] as $a)
@@ -287,7 +326,7 @@
             @endif
         </tr>
     @empty
-        <tr><td colspan="{{ $sintesi ? 5 : 9 }}" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
+        <tr><td colspan="{{ $sintesi ? 8 : 9 }}" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
     @endforelse
     </tbody>
 </table>
