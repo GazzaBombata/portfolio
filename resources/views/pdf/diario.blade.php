@@ -50,6 +50,7 @@
         .data { font-weight: bold; white-space: nowrap; }
         .mese { color: #78716c; }
         .num { white-space: nowrap; }
+        .aderenza { text-align: center; font-size: 1.3em; }
         .vuoto { color: #a8a29e; font-style: italic; }
         .nulla { color: #d6d3d1; }
         .voce { margin-bottom: 0.8mm; }
@@ -98,14 +99,15 @@
         colonne di due cifre l'una, con tre quarti di larghezza in bianco.
     --}}
     <colgroup>
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 22.2%">
-        <col style="width: 11.1%">
+        <col style="width: 10.5%">
+        <col style="width: 10.5%">
+        <col style="width: 10.5%">
+        <col style="width: 10.5%">
+        <col style="width: 10.5%">
+        <col style="width: 10.5%">
+        <col style="width: 21%">
+        <col style="width: 5.5%">
+        <col style="width: 10.5%">
     </colgroup>
     <thead>
     <tr>
@@ -116,6 +118,7 @@
         <th>Pranzo</th>
         <th>Cena</th>
         <th>Piano</th>
+        <th>Piano seguito</th>
         <th>Calorie</th>
     </tr>
     </thead>
@@ -132,7 +135,7 @@
             @if ($riga['vuoto'])
                 {{-- Un giorno vuoto è un'informazione: nasconderlo farebbe
                      sembrare continuo un tracciamento che si è interrotto. --}}
-                <td colspan="7" class="vuoto">niente registrato</td>
+                <td colspan="8" class="vuoto">niente registrato</td>
             @else
                 <td>
                     @php($misure = $riga['sonno'] !== null || $riga['corpo'] !== null || $riga['passi'] !== null || $riga['acqua'] !== null)
@@ -225,9 +228,16 @@
                     @empty
                         <span class="nulla">—</span>
                     @endforelse
+                </td>
 
+                {{-- Una colonna a sé e non un'etichetta in fondo al piano: è il
+                     numero che si confronta scorrendo la pagina dall'alto in
+                     basso, e sotto un elenco di pasti non lo si trova. --}}
+                <td class="aderenza">
                     @if ($riga['aderenza'] !== null)
-                        <div class="etichetta">seguito {{ $riga['aderenza'] }}/10</div>
+                        <span class="num">{{ $riga['aderenza'] }}</span><span class="etichetta">/10</span>
+                    @else
+                        <span class="nulla">—</span>
                     @endif
                 </td>
 
@@ -253,7 +263,7 @@
             @endif
         </tr>
     @empty
-        <tr><td colspan="8" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
+        <tr><td colspan="9" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
     @endforelse
     </tbody>
 </table>
