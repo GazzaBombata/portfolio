@@ -7,6 +7,9 @@
     descrizione tagliata a metà si legge come una descrizione intera.
 --}}
 @php
+    // La versione per il nutrizionista: niente pasti uno per uno né calorie,
+    // solo quanto il piano è stato seguito e cosa ne è uscito.
+    $sintesi ??= false;
     $kcal = fn (?int $n): string => $n === null ? '—' : number_format($n, 0, ',', '.');
     $dec = function (?float $n, int $cifre = 1): string {
         if ($n === null) {
@@ -50,6 +53,7 @@
         .data { font-weight: bold; white-space: nowrap; }
         .mese { color: #78716c; }
         .num { white-space: nowrap; }
+        .aderenza { text-align: center; font-size: 1.3em; }
         .vuoto { color: #a8a29e; font-style: italic; }
         .nulla { color: #d6d3d1; }
         .voce { margin-bottom: 0.8mm; }
@@ -74,9 +78,14 @@
 <body>
 <footer>
     <span class="pagina"></span>
-    Le calorie sono stime — il metabolismo basale viene da una formula di popolazione, e il consumo di un
-    allenamento dipende da come è stato fatto. La notte è datata alla sera in cui è cominciata.
-    Obiettivo = quanto avevi deciso di mangiare; fabbisogno = quanto hai bruciato. ≈ valori stimati.
+    @if ($sintesi)
+        «Fuori piano» elenca solo i pasti diversi da quelli previsti, gli spuntini saltati e i pasti non registrati;
+        il resto della giornata è come da piano. La notte è datata alla sera in cui è cominciata.
+    @else
+        Le calorie sono stime — il metabolismo basale viene da una formula di popolazione, e il consumo di un
+        allenamento dipende da come è stato fatto. La notte è datata alla sera in cui è cominciata.
+        Obiettivo = quanto avevi deciso di mangiare; fabbisogno = quanto hai bruciato. ≈ valori stimati.
+    @endif
 </footer>
 
 <h1>Diario · {{ $utente }}</h1>
@@ -97,26 +106,31 @@
         Sonno, corpo, passi e acqua stanno in una colonna sola: erano quattro
         colonne di due cifre l'una, con tre quarti di larghezza in bianco.
     --}}
-    <colgroup>
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 11.1%">
-        <col style="width: 22.2%">
-        <col style="width: 11.1%">
-    </colgroup>
     <thead>
     <tr>
-        <th>Giorno</th>
-        <th>Sonno, corpo, passi, acqua</th>
-        <th>Allenamenti</th>
-        <th>Colazione e spuntini</th>
-        <th>Pranzo</th>
-        <th>Cena</th>
-        <th>Piano</th>
-        <th>Calorie</th>
+        {{-- Le larghezze stanno sulle intestazioni e non in un colgroup:
+             dompdf i <col> li ignora, e con il layout fisso legge la prima
+             riga. Con il colgroup le colonne uscivano tutte uguali. --}}
+        @if ($sintesi)
+            <th style="width: 8.5%">Giorno</th>
+            <th style="width: 8%">Sonno</th>
+            <th style="width: 6%">Peso</th>
+            <th style="width: 5.5%">Passi</th>
+            <th style="width: 5%">Acqua</th>
+            <th style="width: 15%">Allenamenti</th>
+            <th style="width: 7%">Piano seguito</th>
+            <th style="width: 45%">Fuori piano</th>
+        @else
+            <th style="width: 10.5%">Giorno</th>
+            <th style="width: 10.5%">Sonno, corpo, passi, acqua</th>
+            <th style="width: 10.5%">Allenamenti</th>
+            <th style="width: 10.5%">Colazione e spuntini</th>
+            <th style="width: 10.5%">Pranzo</th>
+            <th style="width: 10.5%">Cena</th>
+            <th style="width: 21%">Piano</th>
+            <th style="width: 5.5%">Piano seguito</th>
+            <th style="width: 10.5%">Calorie</th>
+        @endif
     </tr>
     </thead>
     <tbody>
@@ -132,8 +146,42 @@
             @if ($riga['vuoto'])
                 {{-- Un giorno vuoto è un'informazione: nasconderlo farebbe
                      sembrare continuo un tracciamento che si è interrotto. --}}
-                <td colspan="7" class="vuoto">niente registrato</td>
+                <td colspan="{{ $sintesi ? 7 : 8 }}" class="vuoto">niente registrato</td>
             @else
+                @if ($sintesi)
+                    {{-- Quattro colonne strette invece di una: messe in fila
+                         si leggono scorrendo giù, ed è così che si guarda un
+                         peso o una media di passi. C'è spazio perché i pasti
+                         qui non ci sono. --}}
+                    <td class="num">
+                        @if ($riga['sonno'] !== null)
+                            {{ $ore($riga['sonno']['minuti']) }}@if ($riga['sonno']['qualita'] !== null)<br><span class="etichetta">qualità {{ $riga['sonno']['qualita'] }}/5</span>@endif
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['corpo'] !== null && $riga['corpo']['peso'] !== null)
+                            {{ $dec($riga['corpo']['peso']) }} kg
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['passi'] !== null)
+                            {{ number_format($riga['passi'], 0, ',', '.') }}
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                    <td class="num">
+                        @if ($riga['acqua'] !== null)
+                            {{ $dec($riga['acqua'], 2) }} l
+                        @else
+                            <span class="nulla">—</span>
+                        @endif
+                    </td>
+                @else
                 <td>
                     @php($misure = $riga['sonno'] !== null || $riga['corpo'] !== null || $riga['passi'] !== null || $riga['acqua'] !== null)
 
@@ -175,6 +223,8 @@
                     @endif
                 </td>
 
+                @endif
+
                 <td>
                     @forelse ($riga['fatti'] as $a)
                         <div class="voce">
@@ -209,6 +259,7 @@
                     @endforeach
                 </td>
 
+                @unless ($sintesi)
                 <td>@include('pdf.pasti', ['pasti' => $riga['mangiati']['colazione'], 'conMomento' => true])</td>
 
                 <td>@include('pdf.pasti', ['pasti' => $riga['mangiati']['pranzo'], 'conMomento' => false])</td>
@@ -225,12 +276,33 @@
                     @empty
                         <span class="nulla">—</span>
                     @endforelse
+                </td>
+                @endunless
 
+                {{-- Una colonna a sé e non un'etichetta in fondo al piano: è il
+                     numero che si confronta scorrendo la pagina dall'alto in
+                     basso, e sotto un elenco di pasti non lo si trova. --}}
+                <td class="aderenza">
                     @if ($riga['aderenza'] !== null)
-                        <div class="etichetta">seguito {{ $riga['aderenza'] }}/10</div>
+                        <span class="num">{{ $riga['aderenza'] }}</span><span class="etichetta">/10</span>
+                    @else
+                        <span class="nulla">—</span>
                     @endif
                 </td>
 
+                @if ($sintesi)
+                    <td>
+                        @if ($riga['fuoriPiano'] === null)
+                            <span class="nulla">nessun piano da confrontare</span>
+                        @elseif ($riga['fuoriPiano'] === [])
+                            <span class="etichetta">tutto in piano</span>
+                        @else
+                            @foreach ($riga['fuoriPiano'] as $voce)
+                                <div class="voce">{{ $voce }}</div>
+                            @endforeach
+                        @endif
+                    </td>
+                @else
                 <td>
                     @php($c = $riga['calorie'])
                     <span class="etichetta">mangiate</span> <span class="num">{{ $kcal($c['mangiate']) }}</span><br>
@@ -250,10 +322,11 @@
                         <div class="avviso">{{ $avviso }}</div>
                     @endforeach
                 </td>
+                @endif
             @endif
         </tr>
     @empty
-        <tr><td colspan="8" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
+        <tr><td colspan="{{ $sintesi ? 8 : 9 }}" class="vuoto">In questo intervallo non c'è ancora niente.</td></tr>
     @endforelse
     </tbody>
 </table>
