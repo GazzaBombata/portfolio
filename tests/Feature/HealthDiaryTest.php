@@ -278,3 +278,78 @@ it('rimette in pari il fabbisogno del giorno quando si correggono i passi', func
     expect(DailyLog::sole()->target_calories)
         ->toBe(Energy::dailyNeed($this->user, CarbonImmutable::parse('2026-04-06')));
 });
+
+/*
+ * La colonna «Fuori piano» del PDF per il nutrizionista: il piano lo ha
+ * scritto lui, quindi la riga dice solo cosa ne è uscito.
+ */
+function pastoDelDiario(string $kind, string $momento, string $descrizione, ?int $calorie = 300): void
+{
+    Meal::create(['kind' => $kind, 'eaten_on' => '2026-04-06', 'moment' => $momento, 'description' => $descrizione, 'calories' => $calorie]);
+}
+
+function fuoriPianoDel(User $user): ?array
+{
+    $giorno = CarbonImmutable::parse('2026-04-06');
+
+    return Diary::between($user, $giorno, $giorno)[0]['fuoriPiano'];
+}
+
+it('non elenca niente quando si mangia quello che dice il piano', function () {
+    pastoDelDiario('planned', 'lunch', '200 g secondo magro, 200 g zucchine');
+    pastoDelDiario('eaten', 'lunch', '200 g Secondo magro,  200 g zucchine');
+
+    expect(fuoriPianoDel($this->user))->toBe([]);
+});
+
+it('dice per intero il pasto diverso dal piano', function () {
+    pastoDelDiario('planned', 'dinner', '100 g pasta in bianco');
+    pastoDelDiario('eaten', 'dinner', 'Pizza capricciosa e fritto misto di antipasto');
+
+    expect(fuoriPianoDel($this->user))->toBe(['Cena: Pizza capricciosa e fritto misto di antipasto']);
+});
+
+it('chiama non registrato un pasto previsto che manca, e non saltato', function () {
+    pastoDelDiario('planned', 'breakfast', 'Yogurt greco e corn flakes');
+    pastoDelDiario('planned', 'snack', '150 g pesche, 15 g mandorle');
+
+    expect(fuoriPianoDel($this->user))->toBe([
+        'Colazione: non registrato',
+        'Spuntino previsto non registrato: 150 g pesche, 15 g mandorle',
+    ]);
+});
+
+it('del pasto libero dice cosa ci si è messo dentro', function () {
+    pastoDelDiario('planned', 'dinner', 'Pasto libero (da piano)', null);
+    pastoDelDiario('eaten', 'dinner', 'Sushi all you can eat');
+
+    expect(fuoriPianoDel($this->user))->toBe(['Cena libera: Sushi all you can eat']);
+});
+
+it('abbina ogni spuntino a uno previsto una volta sola', function () {
+    pastoDelDiario('planned', 'snack', '150 g pesche, 15 g mandorle');
+    pastoDelDiario('planned', 'snack', '150 g kiwi, 30 g proteine in polvere');
+    pastoDelDiario('eaten', 'snack', '150 g pesche, 15 g mandorle');
+    pastoDelDiario('eaten', 'snack', '150 g pesche, 15 g mandorle');
+
+    expect(fuoriPianoDel($this->user))->toBe([
+        'Spuntino fuori piano: 150 g pesche, 15 g mandorle',
+        'Spuntino previsto non registrato: 150 g kiwi, 30 g proteine in polvere',
+    ]);
+});
+
+it('senza piano non ha niente da confrontare, e non lo spaccia per tutto in piano', function () {
+    pastoDelDiario('eaten', 'dinner', 'Pizza');
+
+    expect(fuoriPianoDel($this->user))->toBeNull();
+});
+
+it('scarica il PDF per il nutrizionista', function () {
+    pastoDelDiario('planned', 'dinner', '100 g pasta in bianco');
+    pastoDelDiario('eaten', 'dinner', 'Pizza');
+
+    Livewire::test(HealthDiary::class)
+        ->fillForm(['dal' => '2026-04-06', 'al' => '2026-04-06', 'sintesi' => true])
+        ->call('scarica')
+        ->assertFileDownloaded('diario-2026-04-06_2026-04-06.pdf');
+});

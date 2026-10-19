@@ -172,6 +172,7 @@ class Diary
             'inProgramma' => static::allenamenti($inProgramma),
             'calorie' => $vuoto ? null : static::calorie($user, $giorno, $log, $mangiati),
             'avvisi' => $vuoto ? [] : static::avvisi($giorno, $mangiati),
+            'fuoriPiano' => static::fuoriPiano($mangiati, $previsti),
         ];
     }
 
@@ -294,6 +295,91 @@ class Diary
         }
 
         return $avvisi;
+    }
+
+    /**
+     * Solo quello che esce dal piano, pasto per pasto.
+     *
+     * È la colonna che un nutrizionista legge: il piano lo ha scritto lui, e
+     * ripeterglielo giorno per giorno nasconde le tre righe che contano sotto
+     * le trenta che sa già. Il confronto è sulla descrizione: un pasto
+     * mangiato uguale a quello previsto è «in piano», qualunque altra cosa è
+     * detta per intero — senza tagliarla, per la stessa ragione per cui non si
+     * taglia niente di quello che arriva al modello.
+     *
+     * Un pasto che manca non è un pasto saltato: è un pasto non registrato, e
+     * va scritto così. Nasconderlo farebbe sembrare in piano una giornata di
+     * cui semplicemente non si sa niente. Il pasto libero del piano non è uno
+     * scostamento, ma cosa ci si è messo dentro è proprio la cosa da sapere.
+     *
+     * Senza piano quel giorno non c'è niente da confrontare: null, e non una
+     * lista vuota, che si leggerebbe come «tutto in piano».
+     *
+     * @param  array<int, array<string, mixed>>  $mangiati
+     * @param  array<int, array<string, mixed>>  $previsti
+     * @return array<int, string>|null
+     */
+    private static function fuoriPiano(array $mangiati, array $previsti): ?array
+    {
+        if ($previsti === []) {
+            return null;
+        }
+
+        $uguali = fn (string $a, string $b): bool => static::normalizza($a) === static::normalizza($b);
+        $libero = fn (array $p): bool => $p['calorie'] === null && str_contains(mb_strtolower($p['descrizione']), 'libero');
+        $di = fn (array $pasti, string $momento): array => array_values(array_filter($pasti, fn (array $p): bool => $p['chiave'] === $momento));
+
+        $righe = [];
+
+        foreach (['breakfast', 'lunch', 'snack', 'dinner'] as $momento) {
+            $nome = self::NOMI_MOMENTI[$momento];
+            $piano = $di($previsti, $momento);
+            $fatti = $di($mangiati, $momento);
+
+            if ($momento === 'snack') {
+                // Gli spuntini sono più d'uno e senza un ordine fisso: ognuno
+                // si accoppia con il primo previsto uguale ancora libero.
+                $daAbbinare = $piano;
+                foreach ($fatti as $f) {
+                    $i = array_key_first(array_filter($daAbbinare, fn (array $p): bool => $uguali($p['descrizione'], $f['descrizione'])));
+                    if ($i === null) {
+                        $righe[] = 'Spuntino fuori piano: '.$f['descrizione'];
+                    } else {
+                        unset($daAbbinare[$i]);
+                    }
+                }
+                foreach ($daAbbinare as $p) {
+                    $righe[] = 'Spuntino previsto non registrato: '.$p['descrizione'];
+                }
+
+                continue;
+            }
+
+            if ($fatti === []) {
+                if ($piano !== []) {
+                    $righe[] = $nome.': non registrato';
+                }
+
+                continue;
+            }
+
+            $ePastoLibero = $piano !== [] && array_filter($piano, $libero) === $piano;
+
+            foreach ($fatti as $f) {
+                if ($ePastoLibero) {
+                    $righe[] = $nome.($momento === 'lunch' ? ' libero: ' : ' libera: ').$f['descrizione'];
+                } elseif (! array_filter($piano, fn (array $p): bool => $uguali($p['descrizione'], $f['descrizione']))) {
+                    $righe[] = $nome.': '.$f['descrizione'];
+                }
+            }
+        }
+
+        return $righe;
+    }
+
+    private static function normalizza(string $testo): string
+    {
+        return trim((string) preg_replace('/[\s,.;]+/u', ' ', mb_strtolower($testo)));
     }
 
     /**

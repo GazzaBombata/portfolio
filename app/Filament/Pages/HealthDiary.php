@@ -162,6 +162,9 @@ class HealthDiary extends Page
                             ->live()->afterStateUpdated(fn () => $this->carica())
                             ->label('Salta i giorni senza niente dentro')
                             ->helperText('Di norma restano: un giorno vuoto racconta un\'interruzione, e toglierlo fa sembrare continuo un tracciamento che non lo è stato.'),
+                        Toggle::make('sintesi')
+                            ->label('PDF per il nutrizionista')
+                            ->helperText('Niente pasti uno per uno né calorie: per ogni giorno quanto è stato seguito il piano e solo quello che ne è uscito.'),
                     ])
                     ->columns(2),
             ])
@@ -294,6 +297,7 @@ class HealthDiary extends Page
             'al' => $al,
             'utente' => $utente->name,
             'stampato' => CarbonImmutable::now(),
+            'sintesi' => (bool) ($dati['sintesi'] ?? false),
         ])->setPaper('a4', 'landscape');
 
         $nome = sprintf('diario-%s_%s.pdf', $dal->format('Y-m-d'), $al->format('Y-m-d'));
