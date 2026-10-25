@@ -143,4 +143,45 @@ if [ -d "$SITE_DIR/current" ] && command -v composer >/dev/null 2>&1; then
     || emit OK dipendenze "Nessuna vulnerabilità nota nelle dipendenze PHP"
 fi
 
+# ------------------------------------------------------------------------------
+# Webshell: file PHP dove dovrebbe esserci solo index.php
+# nginx esegue qualunque .php sotto public/, e storage/ e' raggiungibile dal web
+# attraverso il link public/storage. Su divine-frost (medbooks, ottobre 2026)
+# c'erano 41 webshell da mesi — lw*.php, fx1337.php, wp-admin-post.php*,
+# media.php in finte cartelle htdocs/ — e nessun controllo li cercava. Tutto
+# cio' che non e' public/index.php e' un webshell finche' non si prova il
+# contrario: CRIT.
+# ------------------------------------------------------------------------------
+if [ -n "$SITE_DIR/current" ] && [ -d "$SITE_DIR/current/public" ]; then
+  STORE=$(readlink -f "$SITE_DIR/current/storage" 2>/dev/null)
+  shells=$( { find "$SITE_DIR/current/public" -type f; [ -n "$STORE" ] && find "$STORE" -type f -not -path "$STORE/framework/views/*"; } 2>/dev/null \
+    | grep -iE '\.(php[0-9]?|phtml|phar|pht)$' | grep -vxF "$SITE_DIR/current/public/index.php" | head -10)
+  if [ -n "$shells" ]; then
+    emit CRIT webshell "File PHP dove non dovrebbero esserci: $(echo "$shells" | tr '\n' ';')"
+  else
+    emit OK webshell "Nessun file PHP in public/ e storage/ oltre a public/index.php"
+  fi
+else
+  emit WARN webshell "Cartella del sito non trovata ($SITE_DIR/current): non posso cercare webshell"
+fi
+
+# ------------------------------------------------------------------------------
+# Codice in esecuzione diverso dal commit deployato
+# La backdoor di medbooks di febbraio 2026 stava in un public/index.php
+# modificato. Il sito e' un checkout git, quindi un file aggiunto o cambiato
+# dopo il deploy compare in git status. Esclusi: quello che il deploy rigenera
+# da se' (asset, file di Filament, cache) e storage/.
+# ------------------------------------------------------------------------------
+if [ -d "$SITE_DIR/current/.git" ]; then
+  drift=$(git -C "$SITE_DIR/current" status --porcelain --untracked-files=all 2>/dev/null \
+    | grep -vE '^.. (public/build/|public/(js|css)/filament/|public/storage$|storage(/|$)|bootstrap/cache/)' | head -10)
+  if [ -n "$drift" ]; then
+    emit HIGH code_drift "Codice in esecuzione diverso dal commit deployato: $(echo "$drift" | sed 's/^ *//' | tr '\n' ';')"
+  else
+    emit OK code_drift "Il codice in esecuzione corrisponde al commit deployato"
+  fi
+else
+  emit WARN code_drift "Nessun .git in $SITE_DIR/current: non posso confrontare il codice con il commit"
+fi
+
 emit OK scan_completato "Controlli terminati alle $(date '+%d/%m/%Y %H:%M')"
