@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6a26fc4e896d0bfef757db1b8cd14791",
+    "content-hash": "569f9dab85ac2e7bd503c1b9b7c1dcc2",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -73,16 +73,16 @@
         },
         {
             "name": "anthropic-ai/sdk",
-            "version": "v0.59.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/anthropics/anthropic-sdk-php.git",
-                "reference": "2698b1b821f02b552ce22032ba18af70f650e3d1"
+                "reference": "d138392e1b80f1f66f3018cd863c5a679e613186"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/anthropics/anthropic-sdk-php/zipball/2698b1b821f02b552ce22032ba18af70f650e3d1",
-                "reference": "2698b1b821f02b552ce22032ba18af70f650e3d1",
+                "url": "https://api.github.com/repos/anthropics/anthropic-sdk-php/zipball/d138392e1b80f1f66f3018cd863c5a679e613186",
+                "reference": "d138392e1b80f1f66f3018cd863c5a679e613186",
                 "shasum": ""
             },
             "require": {
@@ -127,14 +127,14 @@
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "MIT"
+                "Apache-2.0"
             ],
             "description": "Anthropic PHP SDK",
             "support": {
                 "issues": "https://github.com/anthropics/anthropic-sdk-php/issues",
-                "source": "https://github.com/anthropics/anthropic-sdk-php/tree/v0.59.0"
+                "source": "https://github.com/anthropics/anthropic-sdk-php/tree/v1.1.0"
             },
-            "time": "2026-10-15T19:39:53+00:00"
+            "time": "2026-10-21T21:49:18+00:00"
         },
         {
             "name": "barryvdh/laravel-dompdf",
@@ -4608,16 +4608,16 @@
         },
         {
             "name": "open-telemetry/api",
-            "version": "1.10.0",
+            "version": "1.10.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/api.git",
-                "reference": "7c029c4a6fd457094a20569bf98f93d95e9a7559"
+                "reference": "b2bc26bf8bd6b2b6447b3626b2a1b5733873aa0b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/api/zipball/7c029c4a6fd457094a20569bf98f93d95e9a7559",
-                "reference": "7c029c4a6fd457094a20569bf98f93d95e9a7559",
+                "url": "https://api.github.com/repos/opentelemetry-php/api/zipball/b2bc26bf8bd6b2b6447b3626b2a1b5733873aa0b",
+                "reference": "b2bc26bf8bd6b2b6447b3626b2a1b5733873aa0b",
                 "shasum": ""
             },
             "require": {
@@ -4674,7 +4674,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2026-07-06T12:28:04+00:00"
+            "time": "2026-09-16T01:59:09+00:00"
         },
         {
             "name": "open-telemetry/context",
