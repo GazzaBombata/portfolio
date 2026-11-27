@@ -49,6 +49,23 @@ appartiene all'utente isolato), il report parte comunque e lo segnala — in que
 caso conviene installare il cron sotto l'utente `giorgiogiotto` dalla sezione
 **Commands** di Forge.
 
+## Installazione
+
+Una volta sola, come utente `giorgiogiotto`, dopo un deploy:
+
+```bash
+cd /home/giorgiogiotto/giorgiogiotto.it/current/scripts/security-scan
+bash install-on-server.sh
+```
+
+Crea `~/.giorgiogiotto-security-scan/scan.conf` con la baseline di
+`~/.ssh/authorized_keys` e mette la riga nel crontab, passando da `current`,
+così sopravvive ai deploy. Il log va in `~/.giorgiogiotto-security-scan/scan.log`.
+
+Quando aggiungi una chiave SSH, la mail della notte dopo è **urgente**: è
+giusto così, lo scan non sa chi l'ha aggiunta. Se sei stato tu, copia
+l'impronta riportata in `AUTHORIZED_KEYS_SHA256` dentro `scan.conf`.
+
 ## Prova senza mandare niente
 
 ```bash
