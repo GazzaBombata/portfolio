@@ -19,6 +19,13 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=true
 
+# La configurazione sta fuori dalla release, che sparisce al deploy successivo:
+# la scrive install-on-server.sh, con la baseline delle chiavi SSH.
+SCAN_CONF="${SCAN_CONF:-$HOME/.giorgiogiotto-security-scan/scan.conf}"
+# shellcheck disable=SC1090
+[ -r "$SCAN_CONF" ] && . "$SCAN_CONF"
+export AUTHORIZED_KEYS_SHA256="${AUTHORIZED_KEYS_SHA256:-}"
+
 APP_ENV_FILE="${APP_ENV_FILE:-/home/giorgiogiotto/giorgiogiotto.it/.env}"
 MAIL_TO="${MAIL_TO:-giorgio@g8labs.it}"
 
