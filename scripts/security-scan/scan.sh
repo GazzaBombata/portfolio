@@ -37,7 +37,15 @@ if [ -r "$APP_ENV_FILE" ]; then
   export SMTP_PORT="$(envget MAIL_PORT)"
   export SMTP_USER="$(envget MAIL_USERNAME)"
   export SMTP_PASS="$(envget MAIL_PASSWORD)"
-  export SMTP_SSL="$(envget MAIL_ENCRYPTION)"
+  # send_report.py legge SMTP_SECURITY (ssl | starttls | none). Fino al
+  # 27/11/2026 qui si esportava SMTP_SSL, che nessuno leggeva: sulla 465 si
+  # tentava STARTTLS e la connessione restava appesa fino al timeout.
+  case "$(envget MAIL_ENCRYPTION)$(envget MAIL_SCHEME)" in
+    *ssl*|*smtps*) SMTP_SECURITY="${SMTP_SECURITY:-ssl}" ;;
+    *tls*)         SMTP_SECURITY="${SMTP_SECURITY:-starttls}" ;;
+    *) [ "$SMTP_PORT" = "465" ] && SMTP_SECURITY="${SMTP_SECURITY:-ssl}" || SMTP_SECURITY="${SMTP_SECURITY:-starttls}" ;;
+  esac
+  export SMTP_SECURITY
 fi
 export MAIL_TO
 
