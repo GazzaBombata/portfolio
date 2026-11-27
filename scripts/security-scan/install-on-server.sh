@@ -47,7 +47,10 @@ CONFEOF
 fi
 
 RIGA="$CADENZA cd $RUNNER_DIR && ./scan.sh >> $STATE_DIR/scan.log 2>&1 $MARCA"
-( crontab -l 2>/dev/null | grep -v "$MARCA" ; echo "$RIGA" ) | crontab -
+# Con il crontab vuoto grep -v non trova righe ed esce con 1: con set -e e
+# pipefail la subshell si fermerebbe prima di aggiungere RIGA, e installerebbe
+# un crontab vuoto senza dare errori. Il 27/11/2026 è andata proprio così.
+{ crontab -l 2>/dev/null | grep -v "$MARCA" || true; echo "$RIGA"; } | crontab -
 
 echo "Installato. Riga nel crontab:"
 crontab -l | grep "$MARCA"
