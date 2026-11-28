@@ -80,13 +80,23 @@ ct=$(crontab -l 2>/dev/null | grep -vE '^\s*#' \
 
 # --- 7) Chiavi SSH autorizzate ----------------------------------------------
 # Una chiave in più è il modo più silenzioso in cui si resta dentro una
-# macchina. Qui si contano e basta: il confronto con la baseline lo fa
-# l'orchestratore, che sa quante ce n'erano.
+# macchina. Si confronta l'impronta del file con la baseline salvata in
+# scan.conf all'installazione: se cambia è HIGH, anche quando la chiave l'hai
+# aggiunta tu, perché lo scan non può saperlo. In quel caso si aggiorna
+# AUTHORIZED_KEYS_SHA256 in scan.conf con l'impronta riportata.
+# Fino al 27/11/2026 qui si contavano le chiavi e basta: la chiave aggiunta il
+# giorno prima non sarebbe stata notata.
 ak="$HOME/.ssh/authorized_keys"
 if [ -r "$ak" ]; then
   n=$(grep -cvE '^\s*(#|$)' "$ak")
   sha=$(sha256sum "$ak" | cut -d' ' -f1)
-  emit OK chiavi_ssh "authorized_keys: $n chiavi, sha256 $sha"
+  if [ -z "${AUTHORIZED_KEYS_SHA256:-}" ]; then
+    emit WARN chiavi_ssh "Baseline non impostata: $n chiavi, sha256 $sha (mettila in scan.conf come AUTHORIZED_KEYS_SHA256)"
+  elif [ "$sha" = "$AUTHORIZED_KEYS_SHA256" ]; then
+    emit OK chiavi_ssh "authorized_keys invariato ($n chiavi)"
+  else
+    emit HIGH chiavi_ssh "authorized_keys MODIFICATO: atteso $AUTHORIZED_KEYS_SHA256, trovato $sha ($n chiavi)"
+  fi
 else
   emit WARN chiavi_ssh "Non riesco a leggere $ak"
 fi

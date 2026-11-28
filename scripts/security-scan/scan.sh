@@ -19,6 +19,13 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=false
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=true
 
+# La configurazione sta fuori dalla release, che sparisce al deploy successivo:
+# la scrive install-on-server.sh, con la baseline delle chiavi SSH.
+SCAN_CONF="${SCAN_CONF:-$HOME/.giorgiogiotto-security-scan/scan.conf}"
+# shellcheck disable=SC1090
+[ -r "$SCAN_CONF" ] && . "$SCAN_CONF"
+export AUTHORIZED_KEYS_SHA256="${AUTHORIZED_KEYS_SHA256:-}"
+
 APP_ENV_FILE="${APP_ENV_FILE:-/home/giorgiogiotto/giorgiogiotto.it/.env}"
 MAIL_TO="${MAIL_TO:-giorgio@g8labs.it}"
 
@@ -30,7 +37,15 @@ if [ -r "$APP_ENV_FILE" ]; then
   export SMTP_PORT="$(envget MAIL_PORT)"
   export SMTP_USER="$(envget MAIL_USERNAME)"
   export SMTP_PASS="$(envget MAIL_PASSWORD)"
-  export SMTP_SSL="$(envget MAIL_ENCRYPTION)"
+  # send_report.py legge SMTP_SECURITY (ssl | starttls | none). Fino al
+  # 27/11/2026 qui si esportava SMTP_SSL, che nessuno leggeva: sulla 465 si
+  # tentava STARTTLS e la connessione restava appesa fino al timeout.
+  case "$(envget MAIL_ENCRYPTION)$(envget MAIL_SCHEME)" in
+    *ssl*|*smtps*) SMTP_SECURITY="${SMTP_SECURITY:-ssl}" ;;
+    *tls*)         SMTP_SECURITY="${SMTP_SECURITY:-starttls}" ;;
+    *) [ "$SMTP_PORT" = "465" ] && SMTP_SECURITY="${SMTP_SECURITY:-ssl}" || SMTP_SECURITY="${SMTP_SECURITY:-starttls}" ;;
+  esac
+  export SMTP_SECURITY
 fi
 export MAIL_TO
 
