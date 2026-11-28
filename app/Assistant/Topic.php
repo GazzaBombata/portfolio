@@ -2,6 +2,7 @@
 
 namespace App\Assistant;
 
+use App\Ai\WritingStyle;
 use App\Assistant\Tools\BodyMetricHistoryTool;
 use App\Assistant\Tools\CategoriseTransactionsTool;
 use App\Assistant\Tools\CreateCategoryTool;
@@ -91,7 +92,7 @@ enum Topic: string
         - Quando hai scritto qualcosa, dillo in una riga, così può accorgersi subito se hai capito male.
         TXT;
 
-        return match ($this) {
+        $prompt = match ($this) {
             self::Finance => <<<TXT
             Sei il consulente per le spese della persona che ti scrive, dentro il suo gestionale personale. Ti occupi SOLO di soldi: movimenti bancari, categorie, riepiloghi. Della parte alimentare e sportiva si occupa un altro assistente, in un'altra conversazione — se te ne parla, dillo e rimandalo lì.
 
@@ -155,6 +156,8 @@ enum Topic: string
             - Non sei un medico e non dai consigli clinici. Puoi fare i conti, mostrare gli andamenti e dire cosa vedi nei dati. Se la domanda riguarda un sintomo, una terapia o una dieta per una condizione di salute, dillo apertamente e suggerisci di parlarne con chi è qualificato.
             TXT,
         };
+
+        return $prompt."\n\n".WritingStyle::block();
     }
 
     /**
